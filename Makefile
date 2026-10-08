@@ -112,6 +112,7 @@ OBJS	+= virtio/mmio-legacy.o
 OBJS	+= virtio/mmio-modern.o
 
 OBJS	+= snapshot.o
+OBJS	+= registers.o
 
 # Translate uname -m into ARCH string
 ARCH ?= $(shell uname -m | sed -e s/i.86/i386/ -e s/ppc.*/powerpc/ \
@@ -185,6 +186,7 @@ ifeq ($(ARCH), arm64)
 	OBJS		+= arm64/pmu.o
 	OBJS		+= arm64/psci.o
 	OBJS		+= arm64/smccc.o
+	
 	ARCH_INCLUDE	:= arm64/include
 
 	ARCH_WANT_LIBFDT := y

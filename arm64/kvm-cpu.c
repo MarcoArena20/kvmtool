@@ -620,7 +620,7 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
 
         // Calcoliamo l'exception vector per una "synchronous exception from lower EL64"
         vector = vbar_el2 + VECTOR_LOWER_A64_SYNC;
-        set_reg(vcpu_fd, PC, vector);
+        set_reg(vcpu->vcpu_fd, PC, vector);
 
 
         /*

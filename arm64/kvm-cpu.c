@@ -575,10 +575,10 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
 	
 	// Salviamo il PSTATE corrente in SPSR_EL2
         spsr_el2 = pstate;
-        set_reg(vcpu_fd, SPSR_EL2, spsr_el2);
+        set_reg(vcpu->vcpu_fd, SPSR_EL2, spsr_el2);
 	
 	// Salviamo il PC corrente in ELR_EL2
-        set_reg(vcpu_fd, ELR_EL2, pc);
+        set_reg(vcpu->vcpu_fd, ELR_EL2, pc);
 
         // Costruiamo il nuovo PSTATE secondo la specifica ARM
 	new_pstate = 0;

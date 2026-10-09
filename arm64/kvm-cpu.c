@@ -544,7 +544,6 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
 
         uint64_t spsr_el2;
         uint64_t new_pstate;
-        uint64_t esr_el2;
         uint64_t vector;
 
         uint64_t current_mode;
@@ -637,7 +636,6 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
                 "  SCTLR_EL2  = 0x%016llx\n"
                 "  SPSR_EL2   = 0x%016llx\n"
                 "  ELR_EL2    = 0x%016llx\n"
-                "  ESR_EL2    = 0x%016llx\n"
                 "  new PSTATE = 0x%016llx\n"
                 "  vector     = 0x%016llx\n",
                 (unsigned long long)current_el,
@@ -648,7 +646,6 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
                 (unsigned long long)sctlr_el2,
                 (unsigned long long)spsr_el2,
                 (unsigned long long)pc,
-                (unsigned long long)esr_el2,
                 (unsigned long long)new_pstate,
                 (unsigned long long)vector);
 

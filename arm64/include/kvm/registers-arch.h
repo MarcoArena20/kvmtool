@@ -6,35 +6,41 @@
 // GPRs
 #define X(i)      0x6030000000100000ULL + ((uint64_t)i * 2)
 #define PC        0x6030000000100040U
-L
+
 // Defines the state of the vCPU
 #define PSTATE    0x6030000000100042ULL
 
-// Condition flags: NZCV [31:28]
-#define PSR_N_BIT           (1ULL << 31)
-#define PSR_Z_BIT           (1ULL << 30)
-#define PSR_C_BIT           (1ULL << 29)
-#define PSR_V_BIT           (1ULL << 28)
+// PSTATE mode field
+#define KVMTOOL_PSR_MODE_MASK       0x0FULL
+#define KVMTOOL_PSR_MODE32_BIT      (1ULL << 4)
 
-// Extension state
-#define PSR_DIT_BIT         (1ULL << 24)
-#define PSR_TCO_BIT         (1ULL << 25)
-#define PSR_SSBS_BIT        (1ULL << 12)
+#define KVMTOOL_PSR_MODE_EL0t       0x0ULL
+#define KVMTOOL_PSR_MODE_EL1t       0x4ULL
+#define KVMTOOL_PSR_MODE_EL1h       0x5ULL
+#define KVMTOOL_PSR_MODE_EL2t       0x8ULL
+#define KVMTOOL_PSR_MODE_EL2h       0x9ULL
+#define KVMTOOL_PSR_MODE_EL3t       0xCULL
+#define KVMTOOL_PSR_MODE_EL3h       0xDULL
+
+// Exception mask
+#define KVMTOOL_PSR_D_BIT        (1ULL << 9)
+#define KVMTOOL_PSR_A_BIT        (1ULL << 8)
+#define KVMTOOL_PSR_I_BIT        (1ULL << 7)
+#define KVMTOOL_PSR_F_BIT        (1ULL << 6)
 
 // PAN
-#define PSR_PAN_BIT         (1ULL << 22)
+#define KVMTOOL_PSR_PAN_BIT         (1ULL << 22)
 
-// PSTATE mode field
-#define PSR_MODE_MASK       0x0FULL
-#define PSR_MODE32_BIT      (1ULL << 4)
+// Extension state
+#define KVMTOOL_PSR_DIT_BIT         (1ULL << 24)
+#define KVMTOOL_PSR_TCO_BIT         (1ULL << 25)
+#define KVMTOOL_PSR_SSBS_BIT        (1ULL << 12)
 
-#define PSR_MODE_EL0t       0x0ULL
-#define PSR_MODE_EL1t       0x4ULL
-#define PSR_MODE_EL1h       0x5ULL
-#define PSR_MODE_EL2t       0x8ULL
-#define PSR_MODE_EL2h       0x9ULL
-#define PSR_MODE_EL3t       0xCULL
-#define PSR_MODE_EL3h       0xDULL
+// Condition flags: NZCV [31:28]
+#define KVMTOOL_PSR_N_BIT           (1ULL << 31)
+#define KVMTOOL_PSR_Z_BIT           (1ULL << 30)
+#define KVMTOOL_PSR_C_BIT           (1ULL << 29)
+#define KVMTOOL_PSR_V_BIT           (1ULL << 28)
 
 // SPAN: SCTLR_EL2[23]
 #define SCTLR_EL2_SPAN      (1ULL << 23)

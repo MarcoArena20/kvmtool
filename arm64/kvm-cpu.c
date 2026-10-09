@@ -7,6 +7,8 @@
 #include <asm/ptrace.h>
 #include <linux/bitops.h>
 
+#include <kvm/registers.h>
+
 #define COMPAT_PSR_F_BIT	0x00000040
 #define COMPAT_PSR_I_BIT	0x00000080
 #define COMPAT_PSR_E_BIT	0x00000200
@@ -548,22 +550,20 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
         uint64_t current_mode;
         uint64_t current_el;
 
-        const uint16_t hvc_imm = 0;
-
 	// Leggiamo lo stato corrente
-        pstate   = get_reg(vcpu_fd, PSTATE);
-        pc       = get_reg(vcpu_fd, PC);
-        vbar_el2 = get_reg(vcpu_fd, VBAR_EL2);
-        sctlr_el2 = get_reg(vcpu_fd, SCTLR_EL2);
+        pstate   = get_reg(vcpu->vcpu_fd, PSTATE);
+        pc       = get_reg(vcpu->vcpu_fd, PC);
+        vbar_el2 = get_reg(vcpu->vcpu_fd, VBAR_EL2);
+        sctlr_el2 = get_reg(vcpu->vcpu_fd, SCTLR_EL2);
 
-        current_mode = pstate & PSR_MODE_MASK;
+        current_mode = pstate & KVMTOOL_PSR_MODE_MASK;
         current_el   = (current_mode >> 2) & 0x3;
 	
 	// Verifichiamo il livello sorgente di eccezione: EL0t, EL1t, EL1h
 	// Non accettiamo EL2
-	if (current_mode != PSR_MODE_EL0t &&
-            current_mode != PSR_MODE_EL1t &&
-            current_mode != PSR_MODE_EL1h) {
+	if (current_mode != KVMTOOL_PSR_MODE_EL0t &&
+            current_mode != KVMTOOL_PSR_MODE_EL1t &&
+            current_mode != KVMTOOL_PSR_MODE_EL1h) {
 
                 fprintf(stderr,"trigger_exit: unsupported source mode: "
                         "PSTATE=0x%016llx mode=0x%llx EL=%llu\n",
@@ -584,39 +584,39 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
 	new_pstate = 0;
 
 	// Preserviamo i condition flag NZCV
-        new_pstate |= pstate & PSR_N_BIT;
-        new_pstate |= pstate & PSR_Z_BIT;
-        new_pstate |= pstate & PSR_C_BIT;
-        new_pstate |= pstate & PSR_V_BIT;
+        new_pstate |= pstate & KVMTOOL_PSR_N_BIT;
+        new_pstate |= pstate & KVMTOOL_PSR_Z_BIT;
+        new_pstate |= pstate & KVMTOOL_PSR_C_BIT;
+        new_pstate |= pstate & KVMTOOL_PSR_V_BIT;
 	
 	// TCO
-        new_pstate |= PSR_TCO_BIT;
+        new_pstate |= KVMTOOL_PSR_TCO_BIT;
 
 	// Preserviamo il Data Independent Timing
-        new_pstate |= pstate & PSR_DIT_BIT;
+        new_pstate |= pstate & KVMTOOL_PSR_DIT_BIT;
 
 
         // PAN
-        new_pstate |= pstate & PSTATE_PAN_BIT;
+        new_pstate |= pstate & KVMTOOL_PSR_PAN_BIT;
 
         if (!(sctlr_el2 & SCTLR_EL2_SPAN))
-                new_pstate |= PSTATE_PAN_BIT;
+                new_pstate |= KVMTOOL_PSR_PAN_BIT;
 
 	//SSBS
         if (sctlr_el2 & SCTLR_EL2_DSSBS)
-                new_pstate |= PSR_SSBS_BIT;
+                new_pstate |= KVMTOOL_PSR_SSBS_BIT;
 
         // Exception entry maschera DAIF
-        new_pstate |= PSR_D_BIT;
-        new_pstate |= PSR_A_BIT;
-        new_pstate |= PSR_I_BIT;
-        new_pstate |= PSR_F_BIT;
+        new_pstate |= KVMTOOL_PSR_D_BIT;
+        new_pstate |= KVMTOOL_PSR_A_BIT;
+        new_pstate |= KVMTOOL_PSR_I_BIT;
+        new_pstate |= KVMTOOL_PSR_F_BIT;
 
         // Impostiamo il target exception level EL2h
-        new_pstate |= PSR_MODE_EL2h;
+        new_pstate |= KVMTOOL_PSR_MODE_EL2h;
 
         // Scriviamo il nuovo PSTATE
-        set_reg(vcpu_fd, PSTATE, new_pstate);
+        set_reg(vcpu->vcpu_fd, PSTATE, new_pstate);
 
         // Calcoliamo l'exception vector per una "synchronous exception from lower EL64"
         vector = vbar_el2 + VECTOR_LOWER_A64_SYNC;
@@ -703,5 +703,6 @@ int fuzz_registers(struct kvm_cpu *vcpu){
 
         for(int i = 0; i<30; i++)
                 set_reg(vcpu->vcpu_fd, X(i), register_values[i]);
-
+	
+	return seed;
 }

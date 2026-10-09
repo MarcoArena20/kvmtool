@@ -8,6 +8,7 @@ static struct cmdname_help common_cmds[] = {
   {"run", "Start the virtual machine"},
   {"setup", "Setup a new virtual machine"},
   {"pause", "Pause the virtual machine"},
+  {"snap",  "Make a snaphsot of the VM"},
   {"resume", "Resume the virtual machine"},
   {"version", "Print the version of the kernel tree kvm tools"},
   {"list", "Print a list of running instances on the host."},

@@ -1,5 +1,4 @@
 #include "kvm/builtin-snap.h"
-#include "kvm/builtin-pause.h"
 #include "kvm/registers.h"
 #include <kvm/kvm.h>
 #include <kvm/parse-options.h>
@@ -26,7 +25,7 @@ static void parse_snap_options(int argc, const char **argv)
 		argc = parse_options(argc, argv, snap_options, snap_usage,
 				PARSE_OPT_STOP_AT_NON_OPTION);
 		if (argc != 0)
-			kvm_pause_help();
+			kvm_snap_help();
 	}
 }
 
@@ -57,7 +56,7 @@ int kvm_cmd_snap(int argc, const char **argv, const char *prefix)
 	parse_snap_options(argc, argv);
 
 	if (instance_name == NULL)
-		kvm_pause_help();
+		kvm_snap_help();
 
 	instance = kvm__get_sock_by_instance(instance_name);
 

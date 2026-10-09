@@ -607,10 +607,10 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
                 new_pstate |= PSR_SSBS_BIT;
 
         // Exception entry maschera DAIF
-        new_pstate |= PSTATE_D_BIT;
-        new_pstate |= PSTATE_A_BIT;
-        new_pstate |= PSTATE_I_BIT;
-        new_pstate |= PSTATE_F_BIT;
+        new_pstate |= PSR_D_BIT;
+        new_pstate |= PSR_A_BIT;
+        new_pstate |= PSR_I_BIT;
+        new_pstate |= PSR_F_BIT;
 
         // Impostiamo il target exception level EL2h
         new_pstate |= PSR_MODE_EL2h;

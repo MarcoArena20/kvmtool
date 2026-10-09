@@ -2,6 +2,7 @@
 #include "kvm/kvm-cpu.h"
 #include "kvm/virtio.h"
 #include "asm/smccc.h"
+#include "kvm/registers-arch.h"
 
 #include <asm/ptrace.h>
 #include <linux/bitops.h>
@@ -530,4 +531,177 @@ bool kvm_cpu__handle_exit(struct kvm_cpu *vcpu)
 	default:
 		return false;
 	}
+}
+
+int trigger_vm_exit(struct kvm_cpu *vcpu){
+
+	uint64_t pstate;
+        uint64_t pc;
+        uint64_t vbar_el2;
+        uint64_t sctlr_el2;
+
+        uint64_t spsr_el2;
+        uint64_t new_pstate;
+        uint64_t esr_el2;
+        uint64_t vector;
+
+        uint64_t current_mode;
+        uint64_t current_el;
+
+        const uint16_t hvc_imm = 0;
+
+	// Leggiamo lo stato corrente
+        pstate   = get_reg(vcpu_fd, PSTATE);
+        pc       = get_reg(vcpu_fd, PC);
+        vbar_el2 = get_reg(vcpu_fd, VBAR_EL2);
+        sctlr_el2 = get_reg(vcpu_fd, SCTLR_EL2);
+
+        current_mode = pstate & PSR_MODE_MASK;
+        current_el   = (current_mode >> 2) & 0x3;
+	
+	// Verifichiamo il livello sorgente di eccezione: EL0t, EL1t, EL1h
+	// Non accettiamo EL2
+	if (current_mode != PSR_MODE_EL0t &&
+            current_mode != PSR_MODE_EL1t &&
+            current_mode != PSR_MODE_EL1h) {
+
+                fprintf(stderr,"trigger_exit: unsupported source mode: "
+                        "PSTATE=0x%016llx mode=0x%llx EL=%llu\n",
+                        (unsigned long long)pstate,(unsigned long long)current_mode,
+                        (unsigned long long)current_el);
+
+                return -EINVAL;
+        }
+	
+	// Salviamo il PSTATE corrente in SPSR_EL2
+        spsr_el2 = pstate;
+        set_reg(vcpu_fd, SPSR_EL2, spsr_el2);
+	
+	// Salviamo il PC corrente in ELR_EL2
+        set_reg(vcpu_fd, ELR_EL2, pc);
+
+        // Costruiamo il nuovo PSTATE secondo la specifica ARM
+	new_pstate = 0;
+
+	// Preserviamo i condition flag NZCV
+        new_pstate |= pstate & PSR_N_BIT;
+        new_pstate |= pstate & PSR_Z_BIT;
+        new_pstate |= pstate & PSR_C_BIT;
+        new_pstate |= pstate & PSR_V_BIT;
+	
+	// TCO
+        new_pstate |= PSR_TCO_BIT;
+
+	// Preserviamo il Data Independent Timing
+        new_pstate |= pstate & PSR_DIT_BIT;
+
+
+        // PAN
+        new_pstate |= pstate & PSTATE_PAN_BIT;
+
+        if (!(sctlr_el2 & SCTLR_EL2_SPAN))
+                new_pstate |= PSTATE_PAN_BIT;
+
+	//SSBS
+        if (sctlr_el2 & SCTLR_EL2_DSSBS)
+                new_pstate |= PSR_SSBS_BIT;
+
+        // Exception entry maschera DAIF
+        new_pstate |= PSTATE_D_BIT;
+        new_pstate |= PSTATE_A_BIT;
+        new_pstate |= PSTATE_I_BIT;
+        new_pstate |= PSTATE_F_BIT;
+
+        // Impostiamo il target exception level EL2h
+        new_pstate |= PSR_MODE_EL2h;
+
+        // Scriviamo il nuovo PSTATE
+        set_reg(vcpu_fd, PSTATE, new_pstate);
+
+        // Calcoliamo l'exception vector per una "synchronous exception from lower EL64"
+        vector = vbar_el2 + VECTOR_LOWER_A64_SYNC;
+        set_reg(vcpu_fd, PC, vector);
+
+
+        /*
+         * -------------------------------------------------------------
+         * 10. Debug.
+         * -------------------------------------------------------------
+         */
+        fprintf(stderr,
+                "synthetic EL%llu->EL2 exception:\n"
+                "  old PSTATE = 0x%016llx\n"
+                "  old mode   = 0x%llx\n"
+                "  old PC     = 0x%016llx\n"
+                "  VBAR_EL2   = 0x%016llx\n"
+                "  SCTLR_EL2  = 0x%016llx\n"
+                "  SPSR_EL2   = 0x%016llx\n"
+                "  ELR_EL2    = 0x%016llx\n"
+                "  ESR_EL2    = 0x%016llx\n"
+                "  new PSTATE = 0x%016llx\n"
+                "  vector     = 0x%016llx\n",
+                (unsigned long long)current_el,
+                (unsigned long long)pstate,
+                (unsigned long long)current_mode,
+                (unsigned long long)pc,
+                (unsigned long long)vbar_el2,
+                (unsigned long long)sctlr_el2,
+                (unsigned long long)spsr_el2,
+                (unsigned long long)pc,
+                (unsigned long long)esr_el2,
+                (unsigned long long)new_pstate,
+                (unsigned long long)vector);
+
+        return 0;
+
+
+}
+
+static uint64_t splitmix64(uint64_t *state)
+{
+    uint64_t z = (*state += 0x9e3779b97f4a7c15ULL);
+
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+
+    return z ^ (z >> 31);
+}
+
+static uint64_t generate_values(uint64_t values[30])
+{
+    uint64_t seed;
+
+    FILE *f = fopen("/dev/urandom", "rb");
+    if (f == NULL) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    if (fread(&seed, sizeof(seed), 1, f) != 1) {
+        perror("fread");
+        fclose(f);
+        exit(EXIT_FAILURE);
+    }
+
+    fclose(f);
+
+    uint64_t state = seed;
+
+    for (int i = 0; i < 30; i++) {
+        values[i] = splitmix64(&state);
+    }
+
+    return seed;
+}
+
+
+
+int fuzz_registers(struct kvm_cpu *vcpu){
+
+	uint64_t register_values[30] = {0};
+        uint64_t seed = generate_values(register_values);
+
+        for(int i = 0; i<30; i++)
+                set_reg(vcpu->vcpu_fd, X(i), register_values[i]);
+
 }

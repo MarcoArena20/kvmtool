@@ -5,6 +5,7 @@
 /* user defined header files */
 #include "kvm/builtin-debug.h"
 #include "kvm/builtin-pause.h"
+#include "kvm/builtin-snap.h"
 #include "kvm/builtin-resume.h"
 #include "kvm/builtin-balloon.h"
 #include "kvm/builtin-list.h"
@@ -20,6 +21,7 @@
 
 struct cmd_struct kvm_commands[] = {
 	{ "pause",	kvm_cmd_pause,		kvm_pause_help,		0 },
+	{ "snap",       kvm_cmd_snap,           kvm_snap_help,          0 },
 	{ "resume",	kvm_cmd_resume,		kvm_resume_help,	0 },
 	{ "debug",	kvm_cmd_debug,		kvm_debug_help,		0 },
 	{ "balloon",	kvm_cmd_balloon,	kvm_balloon_help,	0 },

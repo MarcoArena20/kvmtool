@@ -14,6 +14,7 @@
 #include "kvm/strbuf.h"
 #include "kvm/kvm-cpu.h"
 #include "kvm/8250-serial.h"
+#include "kvm/snapshot.h"
 
 struct kvm_ipc_head {
 	u32 type;
@@ -362,7 +363,7 @@ static void handle_pause(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg)
 	if (type == KVM_IPC_RESUME && is_paused) {
 		kvm->vm_state = KVM_VMSTATE_RUNNING;
 		kvm__continue(kvm);
-	} else if (type == KVM_IPC_PAUSE && !is_paused) {
+	} else if (type == KVM_IPC_PAUSE  && !is_paused) {
 		kvm->vm_state = KVM_VMSTATE_PAUSED;
 		ioctl(kvm->vm_fd, KVM_KVMCLOCK_CTRL);
 		kvm__pause(kvm);
@@ -382,6 +383,29 @@ static void handle_vmstate(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg)
 
 	if (r < 0)
 		pr_warning("Failed sending VMSTATE");
+}
+
+static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
+	
+	if(kvm->nrcpus != 1){
+		
+		pr_warning("There are more than 1 vCPU!!");
+		return;
+	
+	}
+
+	if(type == KVM_IPC_SNAP){
+	
+		// Mettiamo in pausa l'esecuzione della VM
+		handle_pause(kvm, fd, KVM_IPC_PAUSE, len, msg);
+
+		// Effettuaimo lo snapshot della VM
+		snap_save(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
+
+		// Effettuaimo il resume della VM
+		handle_pause(kvm, fd, KVM_IPC_RESUME, len, msg);	
+	}
+
 }
 
 /*
@@ -487,6 +511,7 @@ int kvm_ipc__init(struct kvm *kvm)
 	kvm_ipc__register_handler(KVM_IPC_RESUME, handle_pause);
 	kvm_ipc__register_handler(KVM_IPC_STOP, handle_stop);
 	kvm_ipc__register_handler(KVM_IPC_VMSTATE, handle_vmstate);
+	kvm_ipc__register_handler(KVM_IPC_SNAP, handle_snap);
 	signal(SIGUSR1, handle_sigusr1);
 
 	return 0;

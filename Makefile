@@ -113,6 +113,7 @@ OBJS	+= virtio/mmio-modern.o
 
 OBJS	+= snapshot.o
 OBJS	+= registers.o
+OBJS	+= builtin-snap.o
 
 # Translate uname -m into ARCH string
 ARCH ?= $(shell uname -m | sed -e s/i.86/i386/ -e s/ppc.*/powerpc/ \

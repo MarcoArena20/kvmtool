@@ -6,7 +6,7 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <kvm/snapshot.h>
-#include <kvm/reg.h>
+#include <kvm/registers.h>
 
 static int snap_get_reg_list(struct kvm_cpu *vcpu,
                              struct kvm_reg_list **reg_list)
@@ -501,7 +501,7 @@ static int snap_load_ram(struct kvm *kvm, int fd)
         return 0;
 }
 
-static void snap_dump_important_regs(struct kvm_cpu *vcpu)
+/*static void snap_dump_important_regs(struct kvm_cpu *vcpu)
 {
     uint64_t pstate;
     uint64_t pc;
@@ -540,7 +540,7 @@ static void snap_dump_important_regs(struct kvm_cpu *vcpu)
             (unsigned long long)((vbar_el2 & ~0x7ffULL) + 0x400));
 
     pr_info("=========================================\n");
-}
+}*/
 
 int snap_save(struct kvm *kvm,
               struct kvm_cpu *vcpu,
@@ -641,7 +641,7 @@ int snap_save(struct kvm *kvm,
 	 /*
          * Stampiamo a video il DUMP dei registri importanti della CPU.
          */
-        snap_dump_important_regs(vcpu);
+        //snap_dump_important_regs(vcpu);
 
         /*
          * RAM del guest

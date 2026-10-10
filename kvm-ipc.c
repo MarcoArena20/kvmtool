@@ -422,7 +422,7 @@ static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 		handle_pause(kvm, fd, KVM_IPC_PAUSE, len, msg);
 
 		// Fuzziamo i registri della CPU
-		trigger_vm_exit(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
+		trigger_vm_exit(kvm->cpus[0]);
 		fuzz_registers(kvm->cpus[0]);
 
 		// Effettuaimo il resume della VM

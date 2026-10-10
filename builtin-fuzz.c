@@ -22,7 +22,7 @@ static const struct option fuzz_options[] = {
 static void parse_fuzz_options(int argc, const char **argv)
 {
         while (argc != 0) {
-                argc = fuzz_options(argc, argv, fuzz_options, fuzz_usage,
+                argc = parse_options(argc, argv, fuzz_options, fuzz_usage,
                                 PARSE_OPT_STOP_AT_NON_OPTION);
                 if (argc != 0)
                         kvm_fuzz_help();
@@ -31,7 +31,7 @@ static void parse_fuzz_options(int argc, const char **argv)
 
 void kvm_fuzz_help(void)
 {
-        usage_with_options(snap_usage, snap_options);
+        usage_with_options(fuzz_usage, fuzz_options);
 }
 
 static int do_fuzz(const char *name, int sock)
@@ -48,7 +48,7 @@ static int do_fuzz(const char *name, int sock)
 }
 
 
-int kvm_fuzz_cmd(int argc, const char **argv, const char *prefix){
+int kvm_cmd_fuzz(int argc, const char **argv, const char *prefix){
 
 	int instance;
         int r;
@@ -56,7 +56,7 @@ int kvm_fuzz_cmd(int argc, const char **argv, const char *prefix){
         parse_fuzz_options(argc, argv);
 
         if (instance_name == NULL)
-                kvm_snap_help();
+                kvm_fuzz_help();
 
         instance = kvm__get_sock_by_instance(instance_name);
 

@@ -6,6 +6,7 @@
 #include "kvm/builtin-debug.h"
 #include "kvm/builtin-pause.h"
 #include "kvm/builtin-snap.h"
+#include "kvm/builtin-fuzz.h"
 #include "kvm/builtin-resume.h"
 #include "kvm/builtin-balloon.h"
 #include "kvm/builtin-list.h"

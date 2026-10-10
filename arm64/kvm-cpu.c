@@ -535,6 +535,27 @@ bool kvm_cpu__handle_exit(struct kvm_cpu *vcpu)
 	}
 }
 
+static uint64_t make_hvc_esr(uint16_t imm16)
+{
+         uint64_t esr;
+
+         /*
+         * EC = 0x16 -> HVC64
+         */
+         esr = ESR_EC_HVC64;
+
+         /*
+         * IL = 1 -> AArch64 instruction, 32 bit
+	 */
+         esr |= (1ULL << 25);
+
+ 	 /*
+         * ISS[15:0] = HVC immediate
+	 */
+	 esr |= (uint64_t)imm16 & ESR_ISS_MASK;
+	 return esr;
+}
+
 int trigger_vm_exit(struct kvm_cpu *vcpu){
 
 	uint64_t pstate;
@@ -578,6 +599,11 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
 	
 	// Salviamo il PC corrente in ELR_EL2
         set_reg(vcpu->vcpu_fd, ELR_EL2, pc);
+	
+	// Simuliamo una exception HVC
+	esr_el2 = make_hvc_esr(hvc_imm);
+        set_reg(vcpu_fd, ESR_EL2, esr_el2);
+
 
         // Costruiamo il nuovo PSTATE secondo la specifica ARM
 	new_pstate = 0;

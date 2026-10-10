@@ -407,6 +407,29 @@ static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	}
 
 }
+static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
+
+	if(kvm->nrcpus != 1){
+		
+		pr_warning("There are more than 1 vCPU!!");
+		return;
+	
+	}
+
+	if(type == KVM_IPC_FUZZ){
+	
+		// Mettiamo in pausa l'esecuzione della VM
+		handle_pause(kvm, fd, KVM_IPC_PAUSE, len, msg);
+
+		// Fuzziamo i registri della CPU
+		trigger_vm_exit(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
+		fuzz_registers(kvm->cpus[0]);
+
+		// Effettuaimo il resume della VM
+		handle_pause(kvm, fd, KVM_IPC_RESUME, len, msg);	
+	}
+
+}
 
 /*
  * Serialize debug printout so that the output of multiple vcpus does not
@@ -512,6 +535,7 @@ int kvm_ipc__init(struct kvm *kvm)
 	kvm_ipc__register_handler(KVM_IPC_STOP, handle_stop);
 	kvm_ipc__register_handler(KVM_IPC_VMSTATE, handle_vmstate);
 	kvm_ipc__register_handler(KVM_IPC_SNAP, handle_snap);
+	kvm_ipc__register_handler(KVM_IPC_FUZZ, handle_fuzz);
 	signal(SIGUSR1, handle_sigusr1);
 
 	return 0;

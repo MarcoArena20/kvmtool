@@ -14,6 +14,7 @@ enum {
 	KVM_IPC_PID	= 7,
 	KVM_IPC_VMSTATE	= 8,
 	KVM_IPC_SNAP 	= 9,
+	KVM_IPC_FUZZ	= 10,
 };
 
 int kvm_ipc__register_handler(u32 type, void (*cb)(struct kvm *kvm,

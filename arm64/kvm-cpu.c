@@ -562,13 +562,16 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
         uint64_t pc;
         uint64_t vbar_el2;
         uint64_t sctlr_el2;
-
+	
+	uint64_t esr_el2;
         uint64_t spsr_el2;
         uint64_t new_pstate;
         uint64_t vector;
 
         uint64_t current_mode;
         uint64_t current_el;
+	
+	uint16_t hvc_imm = 0;
 
 	// Leggiamo lo stato corrente
         pstate   = get_reg(vcpu->vcpu_fd, PSTATE);
@@ -602,7 +605,7 @@ int trigger_vm_exit(struct kvm_cpu *vcpu){
 	
 	// Simuliamo una exception HVC
 	esr_el2 = make_hvc_esr(hvc_imm);
-        set_reg(vcpu_fd, ESR_EL2, esr_el2);
+        set_reg(vcpu->vcpu_fd, ESR_EL2, esr_el2);
 
 
         // Costruiamo il nuovo PSTATE secondo la specifica ARM

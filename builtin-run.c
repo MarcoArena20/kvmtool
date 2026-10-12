@@ -237,6 +237,9 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 		     virtio_transport_parser, NULL),			\
 	OPT_CALLBACK('\0', "loglevel", NULL, "[error|warning|info|debug]",\
 			"Set the verbosity level", loglevel_parser, NULL),\
+	OPT_STRING('\0', "restore-snapshot", &(cfg)->restore_snapshot, 	\
+			"file",						\
+			"Restore VM from snapshot"),			\
 									\
 	OPT_GROUP("Kernel options:"),					\
 	OPT_STRING('k', "kernel", &(cfg)->kernel_filename, "kernel",	\
@@ -863,9 +866,15 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	kvm = kvm_cmd_run_init(argc, argv);
 	if (IS_ERR(kvm))
 		return PTR_ERR(kvm);
+	
+	if(kvm->cfg.restore_snapshot){
+		printf("SNAPSHOT CARICATO CORRETTAMENTE: %s\n", kvm->cfg-restore_snapshot);
+	}
 
-	ret = kvm_cmd_run_work(kvm);
-	kvm_cmd_run_exit(kvm, ret);
+	return 0;
 
-	return ret;
+	//ret = kvm_cmd_run_work(kvm);
+	//kvm_cmd_run_exit(kvm, ret);
+
+	//return ret;
 }

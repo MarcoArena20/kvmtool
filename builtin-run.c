@@ -871,10 +871,8 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		printf("SNAPSHOT CARICATO CORRETTAMENTE: %s\n", kvm->cfg-restore_snapshot);
 	}
 
-	return 0;
+	ret = kvm_cmd_run_work(kvm);
+	kvm_cmd_run_exit(kvm, ret);
 
-	//ret = kvm_cmd_run_work(kvm);
-	//kvm_cmd_run_exit(kvm, ret);
-
-	//return ret;
+	return ret;
 }

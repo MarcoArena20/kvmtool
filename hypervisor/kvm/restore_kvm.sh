@@ -9,6 +9,7 @@ SNAPSHOT=$CURRENT_DIR/snapshot/snapshot.bin
 
 
 $LKVM run \
+--name kvm \
 --firmware $FIRMWARE \
 --disk $ALPINE \
 --cpus 1 \

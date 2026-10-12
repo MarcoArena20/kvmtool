@@ -868,7 +868,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		return PTR_ERR(kvm);
 	
 	if(kvm->cfg.restore_snapshot){
-		printf("SNAPSHOT CARICATO CORRETTAMENTE: %s\n", kvm->cfg-restore_snapshot);
+		printf("SNAPSHOT CARICATO CORRETTAMENTE: %s\n", kvm->cfg.restore_snapshot);
 	}
 
 	ret = kvm_cmd_run_work(kvm);

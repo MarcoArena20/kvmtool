@@ -5,7 +5,8 @@ CURRENT_DIR="$(pwd)"
 LKVM=$CURRENT_DIR/../../lkvm
 FIRMWARE=$CURRENT_DIR/../../firmware/KVMTOOL_EFI.fd
 ALPINE=$CURRENT_DIR/kvm.img
-SNAPSHOT=$CURRENT_DIR/snapshot.bin
+SNAPSHOT=$CURRENT_DIR/snapshot/snapshot.bin
+
 
 $LKVM run \
 --firmware $FIRMWARE \

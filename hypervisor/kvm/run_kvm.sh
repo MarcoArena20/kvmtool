@@ -7,6 +7,7 @@ FIRMWARE=$CURRENT_DIR/../../firmware/KVMTOOL_EFI.fd
 ALPINE=$CURRENT_DIR/kvm.img
 
 $LKVM run \
+--name kvm \
 --firmware $FIRMWARE \
 --disk $ALPINE \
 --cpus 1 \

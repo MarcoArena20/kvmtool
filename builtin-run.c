@@ -870,7 +870,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		return PTR_ERR(kvm);
 	
 	if(kvm->cfg.restore_snapshot)
-		snap_load(kvm, kmv->cpus[0], "./snapshot/snapshot.bin");		
+		snap_load(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");		
 
 	ret = kvm_cmd_run_work(kvm);
 	kvm_cmd_run_exit(kvm, ret);

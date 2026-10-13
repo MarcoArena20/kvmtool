@@ -246,6 +246,7 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 			&(cfg)->intercept_vm_exit,			\
 			"Enable the possibility to "			\
 			"intercept a vm-exit"), 			\
+	OPT_BOOLEAN('\0', "wait_fuzz", &(cfg)->wait_fuzz, "Wait the fuzzer"),\
 									\
 	OPT_GROUP("Kernel options:"),					\
 	OPT_STRING('k', "kernel", &(cfg)->kernel_filename, "kernel",	\
@@ -875,8 +876,16 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	
 	if(kvm->cfg.restore_snapshot){
 		snap_load(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
-		kvm->cfg.single_step = true;		
+		
+		while(kvm->cfg.wait_fuzz){
+		
+			pr_info("Waiting for the fuzzer");
+			sleep(1);
+
+		}
+		kvm->cfg.single_step = true;
 	}
+
 	ret = kvm_cmd_run_work(kvm);
 	kvm_cmd_run_exit(kvm, ret);
 

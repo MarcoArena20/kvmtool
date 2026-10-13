@@ -208,7 +208,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             			if (kvm_cpu_transition_state__check(cpu, before, &detected) < 0)
                 			goto panic_kvm;
 
-				printf("After checking\n";)
+				printf("After checking\n");
 
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");

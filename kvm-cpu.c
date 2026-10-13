@@ -195,20 +195,16 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		case KVM_EXIT_UNKNOWN:
 			break;
 		case KVM_EXIT_DEBUG:
-			//kvm_cpu__show_registers(cpu);
-			//kvm_cpu__show_code(cpu);
+			kvm_cpu__show_registers(cpu);
+			kvm_cpu__show_code(cpu);
 			
 			sleep(1);
 
 			if (before) {
             			bool detected = false;
-				
-				printf("Before checking\n");
 
             			if (kvm_cpu_transition_state__check(cpu, before, &detected) < 0)
                 			goto panic_kvm;
-
-				printf("After checking\n");
 
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");

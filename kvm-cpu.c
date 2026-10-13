@@ -168,6 +168,14 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
 	if (cpu->kvm->cfg.single_step)
 		kvm_cpu__enable_singlestep(cpu);
+	
+	struct kvm_cpu_transition_state *before = NULL;
+
+	if (cpu->kvm->cfg.intercept_vm-exit) {
+    		before = kvm_cpu_transition_state__create();
+    		if (!before)
+        		goto panic_kvm;
+	}
 
 	while (cpu->is_running) {
 		if (cpu->needs_nmi) {
@@ -177,6 +185,9 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
 		if (cpu->task)
 			kvm_cpu__run_task(cpu);
+		
+		if (before && kvm_cpu_transition_state__capture(cpu, before) < 0)
+        		goto panic_kvm;
 
 		kvm_cpu__run(cpu);
 
@@ -186,6 +197,18 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		case KVM_EXIT_DEBUG:
 			kvm_cpu__show_registers(cpu);
 			kvm_cpu__show_code(cpu);
+
+			if (before) {
+            			bool detected = false;
+
+            			if (kvm_cpu_transition_state__check(cpu, before, &detected) < 0)
+                			goto panic_kvm;
+
+            		if (detected) {
+				printf("Detected change from el2 to el1/el0\n");
+                		goto exit_kvm
+            		}
+        }
 			break;
 		case KVM_EXIT_IO: {
 			bool ret;

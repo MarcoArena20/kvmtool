@@ -195,8 +195,8 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		case KVM_EXIT_UNKNOWN:
 			break;
 		case KVM_EXIT_DEBUG:
-			kvm_cpu__show_registers(cpu);
-			kvm_cpu__show_code(cpu);
+			//kvm_cpu__show_registers(cpu);
+			//kvm_cpu__show_code(cpu);
 			
 			sleep(1);
 

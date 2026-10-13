@@ -784,6 +784,8 @@ int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transit
     	/* Estrae il livello di eccezione dai bit M[3:2]. */
     	former_el = (former_mode >> 2) & 0x3;
     	current_el = (current_mode >> 2) & 0x3;
+	
+	printf("CURRENT EL%llu\n", current_el);
 
     	/* La transizione deve partire da EL2. */
     	if (former_el != 2)

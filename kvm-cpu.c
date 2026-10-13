@@ -206,7 +206,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");
-                		goto exit_kvm
+                		goto exit_kvm;
             		}
         }
 			break;

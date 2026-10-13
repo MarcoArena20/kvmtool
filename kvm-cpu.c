@@ -171,7 +171,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	
 	struct kvm_cpu_transition_state *before = NULL;
 
-	if (cpu->kvm->cfg.intercept_vm-exit) {
+	if (cpu->kvm->cfg.intercept_vm_exit) {
     		before = kvm_cpu_transition_state__create();
     		if (!before)
         		goto panic_kvm;

@@ -242,6 +242,10 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 	OPT_STRING('\0', "restore-snapshot", &(cfg)->restore_snapshot, 	\
 			"file",						\
 			"Restore VM from snapshot"),			\
+	OPT_BOOLEAN('\0', "intercept-vm-exit",				\
+			&(cfg)->intercept_vm-exit,			\
+			"Enable the possibility to "			\
+			"intercept a vm-exit"), 			\	
 									\
 	OPT_GROUP("Kernel options:"),					\
 	OPT_STRING('k', "kernel", &(cfg)->kernel_filename, "kernel",	\

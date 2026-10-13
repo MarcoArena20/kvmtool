@@ -32,4 +32,11 @@ void kvm_cpu__run_on_all_cpus(struct kvm *kvm, struct kvm_cpu_task *task);
 int trigger_vm_exit(struct kvm_cpu *vcpu);
 int fuzz_registers(struct kvm_cpu *vcpu);
 
+struct kvm_cpu_transition_state;
+
+struct kvm_cpu_transition_state* kvm_cpu_transition_state__create();
+void kvm_cpu_transition_state__free(struct kvm_cpu_transition_state *state);
+int kvm_cpu_transition_state__capture(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state);
+int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state, bool *detected);
+
 #endif /* KVM__KVM_CPU_H */

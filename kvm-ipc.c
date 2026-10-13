@@ -425,6 +425,9 @@ static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 		trigger_vm_exit(kvm->cpus[0]);
 		fuzz_registers(kvm->cpus[0]);
 
+		// Eseguiamo il codice del fuzzer
+		kvm->cfg.wait_fuzz = false;
+
 		// Effettuaimo il resume della VM
 		handle_pause(kvm, fd, KVM_IPC_RESUME, len, msg);	
 	}

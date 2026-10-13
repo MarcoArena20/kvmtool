@@ -763,36 +763,36 @@ int kvm_cpu_transition_state__capture(struct kvm_cpu *vcpu, struct kvm_cpu_trans
 int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state, bool *detected){
 	
 	uint64_t current_pstate;
-	uint64_t former_mode;
-	uint64_t current_mode;
+    	uint64_t former_mode;
+    	uint64_t current_mode;
+    	unsigned int former_el;
+    	unsigned int current_el;
 
-	if(state == NULL || vcpu == NULL || detected == NULL)
-		return -EINVAL;
-	
-	*detected = false;
+    	if (vcpu == NULL || state == NULL || detected == NULL)
+        	return -EINVAL;
 
-	current_pstate = get_reg(vcpu->vcpu_fd, PSTATE);
+    	/* Per default, nessuna transizione rilevata. */
+    	*detected = false;
 
-	former_mode = state->pstate & KVMTOOL_PSR_MODE_MASK;
-	current_mode = current_pstate & KVMTOOL_PSR_MODE_MASK;	
+    	/* Legge il PSTATE dopo l'esecuzione dell'istruzione. */
+    	current_pstate = get_reg(vcpu->vcpu_fd, PSTATE);
 
-        if(!(former_mode == KVMTOOL_PSR_MODE_EL2h || 
-		former_mode == KVMTOOL_PSR_MODE_EL2t)){
-		
-		return 0;
+    	/* Estrae il campo M[3:0] del PSTATE. */
+    	former_mode = state->pstate & KVMTOOL_PSR_MODE_MASK;
+    	current_mode = current_pstate & KVMTOOL_PSR_MODE_MASK;
 
-	}
-	
-	if(current_mode == KVMTOOL_PSR_MODE_EL0t ||
-		current_mode == KVMTOOL_PSR_MODE_EL1t ||
-		current_mode == KVMTOOL_PSR_MODE_EL1h){
-	
-		*detected = true;
+    	/* Estrae il livello di eccezione dai bit M[3:2]. */
+    	former_el = (former_mode >> 2) & 0x3;
+    	current_el = (current_mode >> 2) & 0x3;
 
-	}
+    	/* La transizione deve partire da EL2. */
+    	if (former_el != 2)
+        	return 0;
 
-	return 0;
+    	/* Intercetta EL2 -> EL1 e EL2 -> EL0. */
+    	if (current_el < 2)
+        	*detected = true;
 
-
+    	return 0;
 
 }

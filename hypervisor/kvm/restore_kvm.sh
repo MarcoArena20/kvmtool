@@ -17,4 +17,4 @@ $LKVM run \
 --nested --e2h0 \
 --params "console=ttyS0,115200 earlycon" \
 --intercept-vm-exit \
---restore-snapshot $SNAPSHOT
+--restore-snapshot $SNAPSHOT --wait_fuzz

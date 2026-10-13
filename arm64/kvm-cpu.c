@@ -785,7 +785,7 @@ int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transit
     	former_el = (former_mode >> 2) & 0x3;
     	current_el = (current_mode >> 2) & 0x3;
 	
-	printf("CURRENT EL%lu\n", current_el);
+	printf("CURRENT EL%u\n", current_el);
 
     	/* La transizione deve partire da EL2. */
     	if (former_el != 2)

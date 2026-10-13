@@ -732,3 +732,67 @@ int fuzz_registers(struct kvm_cpu *vcpu){
 	
 	return seed;
 }
+
+struct kvm_cpu_transition_state{
+
+	uint64_t pstate;
+
+};
+
+struct kvm_cpu_transition_state *kvm_cpu_transition_state__create(){
+
+	return (kvm_cpu_transition_state *) calloc(1, sizeof(kvm_cpu_transition_state));
+
+}
+
+void kvm_cpu_transition_state__free(struct kvm_cpu_transition_state *state){
+
+	free(state);
+
+}
+
+int kvm_cpu_transition_state__capture(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state){
+
+	if(state == NULL || vcpu == NULL)
+		return -1;
+
+	state->pstate = get_reg(vcpu->vcpu_fd, PSTATE);
+	return 0;
+}
+
+int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state, bool *detected){
+	
+	uint64_t current_pstate;
+	uint64_t former_mode;
+	uint64_t current_mode;
+
+	if(state == NULL || vcpu == NULL || detected == NULL)
+		return -EINVAL;
+	
+	*detected = false;
+
+	uint64_t current_pstate = get_reg(vcpu->vcpu_fd, PSTATE);
+
+	uint64_t former_mode = state->pstate & KVMTOOL_PSR_MODE_MASK;
+	uint64_t current_mode = current_pstate & KVMTOOL_PSR_MODE_MASK;	
+
+        if(!(former_mode == KVMTOOL_PSR_MODE_EL2h || 
+		former_mode == KVMTOOL_PSR_MODE_EL2t)){
+		
+		return 0;
+
+	}
+	
+	if(current_mode == KVMTOOL_PSR_MODE_EL0t ||
+		current_mode == KVMTOOL_PSR_MODE_EL1t ||
+		current_mode == KVMTOOL_PSR_MODE_EL1h ||){
+	
+		*detected = true;
+
+	}
+
+	return 0;
+
+
+
+}

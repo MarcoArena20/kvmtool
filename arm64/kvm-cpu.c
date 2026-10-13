@@ -741,7 +741,7 @@ struct kvm_cpu_transition_state{
 
 struct kvm_cpu_transition_state *kvm_cpu_transition_state__create(){
 
-	return (kvm_cpu_transition_state *) calloc(1, sizeof(kvm_cpu_transition_state));
+	return (struct kvm_cpu_transition_state *) calloc(1, sizeof(struct kvm_cpu_transition_state));
 
 }
 
@@ -771,10 +771,10 @@ int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transit
 	
 	*detected = false;
 
-	uint64_t current_pstate = get_reg(vcpu->vcpu_fd, PSTATE);
+	current_pstate = get_reg(vcpu->vcpu_fd, PSTATE);
 
-	uint64_t former_mode = state->pstate & KVMTOOL_PSR_MODE_MASK;
-	uint64_t current_mode = current_pstate & KVMTOOL_PSR_MODE_MASK;	
+	former_mode = state->pstate & KVMTOOL_PSR_MODE_MASK;
+	current_mode = current_pstate & KVMTOOL_PSR_MODE_MASK;	
 
         if(!(former_mode == KVMTOOL_PSR_MODE_EL2h || 
 		former_mode == KVMTOOL_PSR_MODE_EL2t)){
@@ -785,7 +785,7 @@ int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transit
 	
 	if(current_mode == KVMTOOL_PSR_MODE_EL0t ||
 		current_mode == KVMTOOL_PSR_MODE_EL1t ||
-		current_mode == KVMTOOL_PSR_MODE_EL1h ||){
+		current_mode == KVMTOOL_PSR_MODE_EL1h){
 	
 		*detected = true;
 

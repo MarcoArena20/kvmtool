@@ -201,7 +201,24 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		
 		if(trace && kvm_trace__record(trace, cpu) < 0)
 			goto panic_kvm;
+		else{
+		
+			if (trace->count % 16 == 0 &&
+    				kvm_trace__detect_cycle(trace, 32, 8)) {
+    					pr_info("Possible cycle detected: start=%zu, "
+            				"length=%zu, repetitions=%zu\n",
+            				trace->cycle_start,
+            				trace->cycle_length,
+            				trace->cycle_repetitions);
 
+    				ret = kvm_trace__save(trace, trace_path);
+    				if (ret < 0)
+        				printf("Impossibile salvare la traccia\n");
+				else
+					printf("Traccia salvata correttamente\n");
+				goto exit_kvm;
+			}
+		}
 		kvm_cpu__run(cpu);
 
 		switch (cpu->kvm_run->exit_reason) {
@@ -312,15 +329,6 @@ exit_kvm:
 	return 0;
 
 panic_kvm:
-	printf("PANIC KVM\n");
-
-	int ret = kvm_trace__save(trace, "Test/traccia_test.bin");
-        			
-	if (ret < 0)
-            printf("Impossibile salvare la traccia\n");
-	else
-	printf("Traccia salvata con successo\n");
-	
 	return 1;
 }
 

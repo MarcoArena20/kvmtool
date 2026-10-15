@@ -514,3 +514,69 @@ int kvm_trace__analyze_dir(const char *dir_path)
 
     return errors ? -EIO : 0;
 }
+
+bool kvm_trace__detect_cycle(struct kvm_trace *trace,
+                             size_t max_period,
+                             size_t min_repetitions)
+{
+    size_t max_candidate;
+
+    if (!trace || !trace->entries ||
+        max_period == 0 || min_repetitions < 2)
+        return false;
+
+    /* Se il ciclo è già stato rilevato, non sovrascrivere i dati. */
+    if (trace->has_cycle)
+        return true;
+
+    /* Non abbiamo ancora abbastanza entry. */
+    if (trace->count / min_repetitions == 0)
+        return false;
+
+    max_candidate = trace->count / min_repetitions;
+
+    if (max_candidate > max_period)
+        max_candidate = max_period;
+
+    /*
+     * Prova periodi di lunghezza crescente.
+     * Il primo ciclo trovato è quello più corto tra
+     * quelli verificati.
+     */
+    for (size_t period = 1;
+         period <= max_candidate;
+         period++) {
+        size_t start =
+            trace->count - min_repetitions * period;
+        bool repeated = true;
+
+        /*
+         * Confronta ogni blocco con la prima occorrenza.
+         */
+        for (size_t r = 1;
+             r < min_repetitions && repeated;
+             r++) {
+            for (size_t j = 0; j < period; j++) {
+                size_t first = start + j;
+                size_t current = start + r * period + j;
+
+                if (trace->entries[first].pc !=
+                    trace->entries[current].pc) {
+                    repeated = false;
+                    break;
+                }
+            }
+        }
+
+        if (repeated) {
+            trace->has_cycle = true;
+            trace->cycle_start = start;
+            trace->cycle_length = period;
+            trace->cycle_repetitions = min_repetitions;
+
+            return true;
+        }
+    }
+
+    return false;
+}

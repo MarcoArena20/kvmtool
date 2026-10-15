@@ -313,6 +313,14 @@ exit_kvm:
 
 panic_kvm:
 	printf("PANIC KVM\n");
+
+	int ret = kvm_trace__save(trace, "Test/traccia_test.bin");
+        			
+	if (ret < 0)
+            printf("Impossibile salvare la traccia\n");
+	else
+	printf("Traccia salvata con successo\n");
+	
 	return 1;
 }
 

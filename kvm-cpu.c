@@ -211,7 +211,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             				trace->cycle_length,
             				trace->cycle_repetitions);
 
-    				ret = kvm_trace__save(trace, trace_path);
+    				int ret = kvm_trace__save(trace, "Test/traccia_test.bin");
     				if (ret < 0)
         				printf("Impossibile salvare la traccia\n");
 				else

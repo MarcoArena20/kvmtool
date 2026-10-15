@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <kvm/registers.h>
+#include "kvm/registers-arch.h"
 
 struct kvm_trace_arch_state {
     uint64_t pstate;

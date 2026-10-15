@@ -312,6 +312,7 @@ exit_kvm:
 	return 0;
 
 panic_kvm:
+	printf("PANIC KVM\n");
 	return 1;
 }
 

@@ -726,6 +726,10 @@ int fuzz_registers(struct kvm_cpu *vcpu){
 
 	uint64_t register_values[30] = {0};
         uint64_t seed = generate_values(register_values);
+	uint64_t state = seed;
+	
+	set_reg(vcpu->vcpu_fd, ESR_EL2, splitmix64(&state));
+	set_reg(vcpu->vcpu_fd, FAR_EL2, splitmix64(&state));
 
         for(int i = 0; i<30; i++)
                 set_reg(vcpu->vcpu_fd, X(i), register_values[i]);

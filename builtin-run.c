@@ -246,7 +246,7 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 			&(cfg)->intercept_vm_exit,			\
 			"Enable the possibility to "			\
 			"intercept a vm-exit"), 			\
-	OPT_BOOLEAN('\0', "wait_fuzz", &(cfg)->wait_fuzz, "Wait the fuzzer"),\
+	OPT_BOOLEAN('\0', "wait-fuzz", &(cfg)->wait_fuzz, "Wait the fuzzer"),\
 	OPT_BOOLEAN('\0', "trace-execution", &(cfg)->trace_execution,	\
 			"Trace the CPU execution"),			\
 									\

@@ -4,5 +4,5 @@
 CURRENT_DIR="$(pwd)"
 LKVM=$CURRENT_DIR/../../lkvm
 
-$LKVM snap --directory Test
+$LKVM trace --directory Test
 

@@ -181,7 +181,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
 	if (cpu->kvm->cfg.trace_execution) {
     		
-		trace = kvm_trace__create(1000);
+		trace = kvm_trace__create(100000);
     	
 		if (!trace)
         		goto panic_kvm;

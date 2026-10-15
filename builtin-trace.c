@@ -43,5 +43,8 @@ int kvm_cmd_trace(int argc, const char **argv, const char *prefix)
 
 	if (ret < 0)
     		pr_err("Trace analysis failed: %d\n", ret);
+
+	return ret;
+
 }
 

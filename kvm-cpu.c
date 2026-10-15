@@ -172,7 +172,6 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	
 	struct kvm_cpu_transition_state *before = NULL;
 	struct kvm_trace *trace = NULL;
-	uint64_t step = 0;
 	
 	if (cpu->kvm->cfg.intercept_vm_exit) {
     		before = kvm_cpu_transition_state__create();
@@ -182,7 +181,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
 	if (cpu->kvm->cfg.trace_execution) {
     		
-		trace = kvm_trace__create(cpu->kvm->cfg.trace_capacity);
+		trace = kvm_trace__create(1000);
     	
 		if (!trace)
         		goto panic_kvm;
@@ -222,7 +221,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");
                 		
-				ret = kvm_trace__save(trace, "Test/traccia_test.bin");
+				int ret = kvm_trace__save(trace, "Test/traccia_test.bin");
         			
 				if (ret < 0)
             				printf("Impossibile salvare la traccia\n");

@@ -39,4 +39,5 @@ void kvm_cpu_transition_state__free(struct kvm_cpu_transition_state *state);
 int kvm_cpu_transition_state__capture(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state);
 int kvm_cpu_transition_state__check(struct kvm_cpu *vcpu, struct kvm_cpu_transition_state *state, bool *detected);
 
+
 #endif /* KVM__KVM_CPU_H */

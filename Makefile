@@ -115,6 +115,7 @@ OBJS	+= snapshot.o
 OBJS	+= registers.o
 OBJS	+= builtin-snap.o
 OBJS	+= builtin-fuzz.o
+OBJS	+= kvm-trace.c
 
 # Translate uname -m into ARCH string
 ARCH ?= $(shell uname -m | sed -e s/i.86/i386/ -e s/ppc.*/powerpc/ \
@@ -189,6 +190,8 @@ ifeq ($(ARCH), arm64)
 	OBJS		+= arm64/psci.o
 	OBJS		+= arm64/smccc.o
 	
+	OBJS		+= arm64/kvm-arch-state.c
+
 	ARCH_INCLUDE	:= arm64/include
 
 	ARCH_WANT_LIBFDT := y

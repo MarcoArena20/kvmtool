@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "kvm/kvm-cpu.h"
-#include "kvm/kmv-arch-state.h"
+#include "kvm/kvm-arch-state.h"
 
 struct kvm_trace_arch_state;
 

@@ -5,6 +5,13 @@
 #include "kvm/kvm-trace.h"
 #include "kvm/kvm-cpu.h"
 
+#include <dirent.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/stat.h>
+
+
 struct kvm_trace *kvm_trace__create(size_t capacity)
 {
     struct kvm_trace *trace;

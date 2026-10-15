@@ -4,6 +4,7 @@
 #include <kvm/kvm-ipc.h>
 #include <kvm/util.h>
 #include <kvm/kvm-cmd.h>
+#include <kvm/kvm-trace.h>
 
 static const char *directory;
 
@@ -30,7 +31,7 @@ static void parse_trace_options(int argc, const char **argv)
 
 void kvm_trace_help(void)
 {
-        usage_with_options(snap_usage, snap_options);
+        usage_with_options(trace_usage, trace_options);
 }
 
 int kvm_cmd_trace(int argc, const char **argv, const char *prefix)
@@ -38,7 +39,7 @@ int kvm_cmd_trace(int argc, const char **argv, const char *prefix)
 
         parse_trace_options(argc, argv);
 	
-	ret = kvm_trace__analyze_dir(directory);
+	int ret = kvm_trace__analyze_dir(directory);
 
 	if (ret < 0)
     		pr_err("Trace analysis failed: %d\n", ret);

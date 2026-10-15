@@ -21,7 +21,6 @@ int kvm_trace_arch__capture(struct kvm_cpu *vcpu,
                             uint64_t *pc,
                             struct kvm_trace_arch_state *state)
 {
-    int ret;
 
     if (!vcpu || !pc || !state)
         return -EINVAL;

@@ -281,3 +281,229 @@ const struct kvm_trace_entry *kvm_trace__get(const struct kvm_trace *trace, size
 
     return &trace->entries[index];
 }
+
+static bool has_bin_extension(const char *name)
+{
+    size_t len;
+
+    if (!name)
+        return false;
+
+    len = strlen(name);
+
+    return len >= 4 && strcmp(name + len - 4, ".bin") == 0;
+}
+
+/*
+ * Confronta due indirizzi PC per qsort().
+ */
+static int compare_pc(const void *a, const void *b)
+{
+    uint64_t pc_a = *(const uint64_t *)a;
+    uint64_t pc_b = *(const uint64_t *)b;
+
+    return (pc_a > pc_b) - (pc_a < pc_b);
+}
+
+/*
+ * Conta gli indirizzi PC distinti nella traccia.
+ */
+static int count_unique_pcs(const struct kvm_trace *trace,
+                            size_t *unique_count)
+{
+    uint64_t *pcs;
+
+    if (!trace || !unique_count)
+        return -EINVAL;
+
+    *unique_count = 0;
+
+    if (trace->count == 0)
+        return 0;
+
+    if (trace->count > SIZE_MAX / sizeof(*pcs))
+        return -EOVERFLOW;
+
+    pcs = malloc(trace->count * sizeof(*pcs));
+    if (!pcs)
+        return -ENOMEM;
+
+    for (size_t i = 0; i < trace->count; i++) {
+        const struct kvm_trace_entry *entry;
+
+        entry = kvm_trace__get(trace, i);
+        if (!entry) {
+            free(pcs);
+            return -EINVAL;
+        }
+
+        pcs[i] = entry->pc;
+    }
+
+    qsort(pcs, trace->count, sizeof(*pcs), compare_pc);
+
+    *unique_count = 1;
+
+    for (size_t i = 1; i < trace->count; i++) {
+        if (pcs[i] != pcs[i - 1])
+            (*unique_count)++;
+    }
+
+    free(pcs);
+    return 0;
+}
+
+/*
+ * Analizza tutti i file .bin presenti direttamente
+ * nella directory specificata.
+ */
+int kvm_trace__analyze_dir(const char *dir_path)
+{
+    DIR *dir;
+    struct dirent *entry;
+    size_t files_found = 0;
+    size_t files_analyzed = 0;
+    size_t errors = 0;
+    int dir_error = 0;
+
+    if (!dir_path)
+        return -EINVAL;
+
+    dir = opendir(dir_path);
+    if (!dir)
+        return -errno;
+
+    while (1) {
+        char *path;
+        size_t dir_len;
+        size_t name_len;
+        size_t path_len;
+        bool has_slash;
+        struct stat st;
+        struct kvm_trace *trace;
+        size_t unique_pcs;
+        int ret;
+
+        /*
+         * Distingue la fine della directory da un errore
+         * di readdir(). Le funzioni chiamate nel ciclo
+         * possono modificare errno.
+         */
+        errno = 0;
+        entry = readdir(dir);
+
+        if (!entry) {
+            if (errno)
+                dir_error = -errno;
+            break;
+        }
+
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        if (!has_bin_extension(entry->d_name))
+            continue;
+
+        /*
+         * Costruisce il percorso completo senza assumere
+         * una dimensione fissa massima.
+         */
+        dir_len = strlen(dir_path);
+        name_len = strlen(entry->d_name);
+        has_slash = dir_len > 0 &&
+                    dir_path[dir_len - 1] == '/';
+
+        if (dir_len > SIZE_MAX - name_len -
+                      (has_slash ? 1 : 2)) {
+            fprintf(stderr, "Path too long: %s\n",
+                    entry->d_name);
+            errors++;
+            continue;
+        }
+
+        path_len = dir_len + name_len +
+                   (has_slash ? 1 : 2);
+
+        path = malloc(path_len);
+        if (!path) {
+            fprintf(stderr, "Out of memory\n");
+            errors++;
+            continue;
+        }
+
+        if (has_slash)
+            snprintf(path, path_len, "%s%s",
+                     dir_path, entry->d_name);
+        else
+            snprintf(path, path_len, "%s/%s",
+                     dir_path, entry->d_name);
+
+        /*
+         * Ignora directory e altri oggetti che terminano
+         * con ".bin": analizziamo soltanto file regolari.
+         */
+        if (stat(path, &st) < 0) {
+            fprintf(stderr, "Cannot stat %s: %s\n",
+                    path, strerror(errno));
+            free(path);
+            errors++;
+            continue;
+        }
+
+        if (!S_ISREG(st.st_mode)) {
+            free(path);
+            continue;
+        }
+
+        files_found++;
+
+        /*
+         * Ricostruisce la traccia dal file binario.
+         */
+        trace = kvm_trace__load(path);
+        if (!trace) {
+            fprintf(stderr, "Cannot load trace: %s\n",
+                    path);
+            free(path);
+            errors++;
+            continue;
+        }
+
+        /*
+         * Calcola gli indirizzi PC distinti.
+         */
+        ret = count_unique_pcs(trace, &unique_pcs);
+        if (ret < 0) {
+            fprintf(stderr,
+                    "Cannot analyze %s: error %d\n",
+                    path, ret);
+
+            kvm_trace__free(trace);
+            free(path);
+            errors++;
+            continue;
+        }
+
+        printf("%s: steps=%zu unique_pcs=%zu\n",
+               path, trace->count, unique_pcs);
+
+        files_analyzed++;
+
+        kvm_trace__free(trace);
+        free(path);
+    }
+
+    if (closedir(dir) < 0 && !dir_error)
+        dir_error = -errno;
+
+    printf("\nAnalysis summary\n");
+    printf("Files found:     %zu\n", files_found);
+    printf("Files analyzed:  %zu\n", files_analyzed);
+    printf("Errors:          %zu\n", errors);
+
+    if (dir_error)
+        return dir_error;
+
+    return errors ? -EIO : 0;
+}

@@ -33,4 +33,6 @@ const struct kvm_trace_entry *kvm_trace__get(const struct kvm_trace *trace, size
 
 void kvm_trace__free(struct kvm_trace *trace);
 
+int kvm_trace__analyze_dir(const char *dir_path);
+
 #endif

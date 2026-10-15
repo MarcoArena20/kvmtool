@@ -18,6 +18,7 @@
 #include "kvm/builtin-sandbox.h"
 #include "kvm/kvm-cmd.h"
 #include "kvm/builtin-run.h"
+#include "kvm/builtin-trace.h"
 #include "kvm/util.h"
 
 struct cmd_struct kvm_commands[] = {
@@ -37,6 +38,7 @@ struct cmd_struct kvm_commands[] = {
 	{ "setup",	kvm_cmd_setup,		kvm_setup_help,		0 },
 	{ "run",	kvm_cmd_run,		kvm_run_help,		0 },
 	{ "sandbox",	kvm_cmd_sandbox,	kvm_run_help,		0 },
+	{ "trace",	kvm_cmd_trace,		kvm_trace_help,		0 },
 	{ NULL,		NULL,			NULL,			0 },
 };
 

@@ -1,6 +1,7 @@
 #include "linux/err.h"
 
 #include "kvm/kvm-cpu.h"
+#include "kvm/kvm-trace.h"
 
 #include "kvm/symbol.h"
 #include "kvm/util.h"
@@ -170,10 +171,20 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		kvm_cpu__enable_singlestep(cpu);
 	
 	struct kvm_cpu_transition_state *before = NULL;
-
+	struct kvm_trace *trace = NULL;
+	uint64_t step = 0;
+	
 	if (cpu->kvm->cfg.intercept_vm_exit) {
     		before = kvm_cpu_transition_state__create();
     		if (!before)
+        		goto panic_kvm;
+	}
+
+	if (cpu->kvm->cfg.trace_execution) {
+    		
+		trace = kvm_trace__create(cpu->kvm->cfg.trace_capacity);
+    	
+		if (!trace)
         		goto panic_kvm;
 	}
 
@@ -188,6 +199,9 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		
 		if (before && kvm_cpu_transition_state__capture(cpu, before) < 0)
         		goto panic_kvm;
+		
+		if(trace && kvm_trace__record(trace, cpu) < 0)
+			goto panic_kvm;
 
 		kvm_cpu__run(cpu);
 
@@ -207,7 +221,15 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");
-                		goto exit_kvm;
+                		
+				ret = kvm_trace__save(trace, "Test/traccia_test.bin");
+        			
+				if (ret < 0)
+            				printf("Impossibile salvare la traccia\n");
+				else
+					printf("Traccia salvata con successo\n");
+				
+				goto exit_kvm;
             		}
         }
 			break;

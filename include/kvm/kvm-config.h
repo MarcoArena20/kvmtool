@@ -35,6 +35,7 @@ struct kvm_config {
 	int nrcpus;
 	bool intercept_vm_exit;
 	bool wait_fuzz;
+	bool trace_execution;
 	const char *restore_snapshot;
 	const char *kernel_cmdline;
 	const char *kernel_filename;

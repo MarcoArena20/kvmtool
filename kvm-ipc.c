@@ -426,7 +426,7 @@ static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 		uint64_t seed = fuzz_registers(kvm->cpus[0]);
 		
 		// Salviamo il seed
-		char stringa* = NULL;
+		char *stringa = NULL;
     		asprintf(&stringa, "%" PRIu64, seed);
 		kvm->cfg.fuzz_seed = stringa;
 

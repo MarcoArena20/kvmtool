@@ -437,33 +437,52 @@ reply:
 }
 static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 
-	if(kvm->nrcpus != 1){
-		
-		pr_warning("There are more than 1 vCPU!!");
-		return;
-	
-	}
+	int ret = -EINVAL;
+    	bool was_paused;
+    	bool paused_by_fuzz = false;
+    	uint64_t seed;
+    	char *seed_string = NULL;
 
-	if(type == KVM_IPC_FUZZ){
-	
-		// Mettiamo in pausa l'esecuzione della VM
-		handle_pause(kvm, fd, KVM_IPC_PAUSE, len, msg);
+    	if (type != KVM_IPC_FUZZ || len != 0)
+        	goto reply;
 
-		// Fuzziamo i registri della CPU
-		trigger_vm_exit(kvm->cpus[0]);
-		uint64_t seed = fuzz_registers(kvm->cpus[0]);
-		
-		// Salviamo il seed
-		char *stringa = NULL;
-    		asprintf(&stringa, "%" PRIu64, seed);
-		kvm->cfg.fuzz_seed = stringa;
+    	if (kvm->nrcpus != 1 || !kvm->cpus || !kvm->cpus[0]) {
+        	pr_warning("Fuzzing requires exactly one initialized vCPU\n");
+        	goto reply;
+    	}
 
-		// Eseguiamo il codice del fuzzer
-		kvm->cfg.wait_fuzz = false;
+    	was_paused = is_paused;
 
-		// Effettuaimo il resume della VM
-		handle_pause(kvm, fd, KVM_IPC_RESUME, len, msg);	
-	}
+    	handle_pause(kvm, fd, KVM_IPC_PAUSE, 0, NULL);
+    	paused_by_fuzz = !was_paused && is_paused;
+
+    	ret = trigger_vm_exit(kvm->cpus[0]);
+    	if (ret < 0) {
+        	pr_err("Failed to trigger VM exit: %s\n",
+               	strerror(-ret));
+        	goto resume;
+    	}
+
+    	seed = fuzz_registers(kvm->cpus[0]);
+
+    	if (asprintf(&seed_string, "%" PRIu64, seed) < 0) {
+        	seed_string = NULL;
+        	ret = -ENOMEM;
+        	pr_err("Unable to allocate fuzz seed string\n");
+        	goto resume;
+    	}
+
+    	kvm->cfg.fuzz_seed = seed_string;
+    	kvm->cfg.wait_fuzz = false;
+    	ret = 0;
+
+resume:
+    	if (paused_by_fuzz)
+        	handle_pause(kvm, fd, KVM_IPC_RESUME, 0, NULL);
+
+reply:
+    	if (write_in_full(fd, &ret, sizeof(ret)) < 0)
+        	pr_warning("Failed sending fuzz status\n");
 
 }
 

@@ -1,3 +1,5 @@
+#include <errno.h>
+#include "kvm/read-write.h"
 #include "kvm/builtin-fuzz.h"
 #include "kvm/registers.h"
 #include <kvm/kvm.h>
@@ -36,15 +38,30 @@ void kvm_fuzz_help(void)
 
 static int do_fuzz(const char *name, int sock)
 {
-        int r;
+        int status;
+    	int r;
+    	ssize_t n;
 
-        r = kvm_ipc__send(sock, KVM_IPC_FUZZ);
-        if (r)
-                return r;
+    	r = kvm_ipc__send(sock, KVM_IPC_FUZZ);
+    	if (r < 0)
+        	return r;
 
-        printf("Guest %s fuzzed\n", name);
+    	n = read_in_full(sock, &status, sizeof(status));
+    	if (n != (ssize_t)sizeof(status)) {
+        	int err = n < 0 ? errno : EIO;
 
-        return 0;
+        	pr_err("Failed receiving fuzz result for guest %s\n", name);
+        	return -err;
+    	}
+
+    	if (status < 0) {
+        	pr_err("Fuzzing failed for guest %s: %s\n", name, strerror(-status));
+        	return status;
+    	}
+
+    	printf("Guest %s fuzzed successfully\n", name);
+    	return 0;
+	
 }
 
 

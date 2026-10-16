@@ -18,6 +18,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include <limits.h>
 
 extern __thread struct kvm_cpu *current_kvm_cpu;
 
@@ -154,6 +155,30 @@ static void handle_wakeup(struct kvm_cpu *vcpu)
 		die_perror("KVM_SET_MP_STATE failed");
 }
 
+
+static int kvm_cpu__build_trace_path(char *path, size_t size,
+                                     const char *seed)
+{
+    	int n;
+
+    	if (!path || size == 0)
+        	return -EINVAL;
+
+    	if (seed)
+        	n = snprintf(path, size, "Test/%s.bin", seed);
+    	else
+        	n = snprintf(path, size, "Test/traccia_test.bin");
+
+    	if (n < 0)
+        	return -EIO;
+
+    	if ((size_t)n >= size)
+        	return -ENAMETOOLONG;
+
+    	return 0;
+}
+
+
 int kvm_cpu__start(struct kvm_cpu *cpu)
 {
 	sigset_t sigset;
@@ -172,7 +197,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	
 	struct kvm_cpu_transition_state *before = NULL;
 	struct kvm_trace *trace = NULL;
-	char trace_path[50] = "Test/";
+	char trace_path[PATH_MAX];
 
 	if (cpu->kvm->cfg.intercept_vm_entry) {
     		before = kvm_cpu_transition_state__create();
@@ -213,20 +238,21 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             					trace->cycle_length,
             					trace->cycle_repetitions);
 				
-				if(cpu->kvm->cfg.fuzz_seed){
+				int ret;
 
-					strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
-					strcat(trace_path, ".bin");
+				ret = kvm_cpu__build_trace_path(trace_path, sizeof(trace_path),
+                                				cpu->kvm->cfg.fuzz_seed);
+				if (ret < 0) {
+    					pr_err("Cannot build trace path: %s\n", strerror(-ret));
+    					goto panic_kvm;
+				}
 
-				}else{
-					strcat(trace_path, "traccia_test.bin");
-					}
-
-    				int ret = kvm_trace__save(trace, trace_path);
+    				ret = kvm_trace__save(trace, trace_path);
     				if (ret < 0)
         				printf("Impossibile salvare la traccia\n");
 				else
 					printf("Traccia salvata correttamente\n");
+				
 				goto exit_kvm;
 			}
 		}
@@ -252,27 +278,24 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
                 		
 				if(cpu->kvm->cfg.trace_execution && trace){
 				
-					if(cpu->kvm->cfg.fuzz_seed){
-					
-						strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
-            					strcat(trace_path, ".bin");
-        				
-					} else {
-            					strcat(trace_path, "traccia_test.bin");
-        				}
+					int ret;
 
-				}
+    					ret = kvm_cpu__build_trace_path(trace_path, sizeof(trace_path),
+                                    					cpu->kvm->cfg.fuzz_seed);
+    					
+					if (ret < 0) {
+        					pr_err("Cannot build trace path: %s\n", strerror(-ret));
+        					goto panic_kvm;
+    					}
 				
-				
-
-				int ret = kvm_trace__save(trace, trace_path);
+					int ret = kvm_trace__save(trace, trace_path);
         			
-				if (ret < 0)
-            				printf("Impossibile salvare la traccia\n");
-				else
-					printf("Traccia salvata con successo\n");
+					if (ret < 0)
+            					printf("Impossibile salvare la traccia\n");
+					else
+						printf("Traccia salvata con successo\n");
 				
-				goto exit_kvm;
+					goto exit_kvm;
             			}
         		}
 			break;
@@ -353,6 +376,8 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	}
 
 exit_kvm:
+	kvm_trace__free(trace);
+    	kvm_cpu_transition_state__free(before);
 	return 0;
 
 panic_kvm:

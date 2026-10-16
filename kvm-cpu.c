@@ -172,7 +172,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	
 	struct kvm_cpu_transition_state *before = NULL;
 	struct kvm_trace *trace = NULL;
-	char trace_path[50] = "Test/"
+	char trace_path[50] = "Test/";
 
 	if (cpu->kvm->cfg.intercept_vm_exit) {
     		before = kvm_cpu_transition_state__create();

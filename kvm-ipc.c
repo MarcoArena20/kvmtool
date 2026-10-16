@@ -427,7 +427,7 @@ static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 		
 		// Salviamo il seed
 		char stringa[21];  // 20 cifre + terminatore '\0'
-    		snprintf(stringa, sizeof(stringa), "%" PRIu64, valore);
+    		snprintf(stringa, sizeof(stringa), "%" PRIu64, seed);
 		kvm->cgf.fuzz_seed = stringa;
 
 		// Eseguiamo il codice del fuzzer

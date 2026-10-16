@@ -273,31 +273,31 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             			if (kvm_cpu_transition_state__check(cpu, before, &detected) < 0)
                 			goto panic_kvm;
 
-            		if (detected) {
-				printf("Detected change from el2 to el1/el0\n");
+            			if (detected) {
+					printf("Detected change from el2 to el1/el0\n");
                 		
-				if(cpu->kvm->cfg.trace_execution && trace){
+					if(cpu->kvm->cfg.trace_execution && trace){
 				
-					int ret;
-
-    					ret = kvm_cpu__build_trace_path(trace_path, sizeof(trace_path),
+						int ret;
+						ret = kvm_cpu__build_trace_path(trace_path, sizeof(trace_path),
                                     					cpu->kvm->cfg.fuzz_seed);
     					
-					if (ret < 0) {
-        					pr_err("Cannot build trace path: %s\n", strerror(-ret));
-        					goto panic_kvm;
-    					}
+						if (ret < 0) {
+        						pr_err("Cannot build trace path: %s\n", strerror(-ret));
+        						goto panic_kvm;
+    						}
 				
-					ret = kvm_trace__save(trace, trace_path);
+						ret = kvm_trace__save(trace, trace_path);
         			
-					if (ret < 0)
-            					printf("Impossibile salvare la traccia\n");
-					else
-						printf("Traccia salvata con successo\n");
+						if (ret < 0)
+            						printf("Impossibile salvare la traccia\n");
+						else
+							printf("Traccia salvata con successo\n");
 				
-					goto exit_kvm;
-            			}
-        		}
+						goto exit_kvm;
+            				}
+        			}
+			}
 			break;
 		case KVM_EXIT_IO: {
 			bool ret;

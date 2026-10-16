@@ -172,7 +172,9 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	
 	struct kvm_cpu_transition_state *before = NULL;
 	struct kvm_trace *trace = NULL;
-	
+	char trace_path[50];
+	char directory = "Test/";
+
 	if (cpu->kvm->cfg.intercept_vm_exit) {
     		before = kvm_cpu_transition_state__create();
     		if (!before)
@@ -210,8 +212,15 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             				trace->cycle_start,
             				trace->cycle_length,
             				trace->cycle_repetitions);
+				
+				if(cpu->kvm->cfg.fuzz_seed){
+					strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
+					strcat(trace_path, ".bin");
+				}else{
+					strcat(trace_path, "traccia_test.bin");
+				}
 
-    				int ret = kvm_trace__save(trace, "Test/traccia_test.bin");
+    				int ret = kvm_trace__save(trace, trace_path);
     				if (ret < 0)
         				printf("Impossibile salvare la traccia\n");
 				else
@@ -238,7 +247,14 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");
                 		
-				int ret = kvm_trace__save(trace, "Test/traccia_test.bin");
+				if(cpu->kvm->cfg.fuzz_seed){
+					strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
+					strcat(trace_path, ".bin");
+				}else{
+					strcat(trace_path, "traccia_test.bin");
+				}
+
+				int ret = kvm_trace__save(trace, trace_path);
         			
 				if (ret < 0)
             				printf("Impossibile salvare la traccia\n");

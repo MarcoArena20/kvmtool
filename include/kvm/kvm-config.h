@@ -37,6 +37,7 @@ struct kvm_config {
 	bool wait_fuzz;
 	bool trace_execution;
 	const char *restore_snapshot;
+	const char *fuzz_seed;
 	const char *kernel_cmdline;
 	const char *kernel_filename;
 	const char *vmlinux_filename;

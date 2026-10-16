@@ -6,10 +6,10 @@
 #include <kvm/kvm-cmd.h>
 #include <kvm/kvm-trace.h>
 
-static const char *directory;
+static const char *directory = "Test";
 
 static const char * const trace_usage[] = {
-        "lkvm snap [-d directory]",
+        "lkvm trace [-d directory]",
         NULL
 };
 

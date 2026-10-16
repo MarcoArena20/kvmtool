@@ -288,7 +288,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
         					goto panic_kvm;
     					}
 				
-					int ret = kvm_trace__save(trace, trace_path);
+					ret = kvm_trace__save(trace, trace_path);
         			
 					if (ret < 0)
             					printf("Impossibile salvare la traccia\n");

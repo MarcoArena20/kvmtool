@@ -213,11 +213,11 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             				trace->cycle_repetitions);
 				
 				if(cpu->kvm->cfg.fuzz_seed){
-					//strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
-					strcat(trace_path, "Ciao");
+
+					strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
 					strcat(trace_path, ".bin");
 
-					printf("Path saved (cycle): %s", trace_path);
+					printf("Path saved (cycle): %s\n", trace_path);
 				}else{
 					strcat(trace_path, "traccia_test.bin");
 				}

@@ -250,12 +250,20 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
             		if (detected) {
 				printf("Detected change from el2 to el1/el0\n");
                 		
-				if(cpu->kvm->cfg.fuzz_seed){
-					strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
-					strcat(trace_path, ".bin");
-				}else{
-					strcat(trace_path, "traccia_test.bin");
+				if(cpu->kvm->cfg.trace_execution && trace){
+				
+					if(cpu->kvm->cfg.fuzz_seed){
+					
+						strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
+            					strcat(trace_path, ".bin");
+        				
+					} else {
+            					strcat(trace_path, "traccia_test.bin");
+        				}
+
 				}
+				
+				
 
 				int ret = kvm_trace__save(trace, trace_path);
         			
@@ -265,8 +273,8 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 					printf("Traccia salvata con successo\n");
 				
 				goto exit_kvm;
-            		}
-        }
+            			}
+        		}
 			break;
 		case KVM_EXIT_IO: {
 			bool ret;

@@ -124,6 +124,24 @@ int kvm_trace__record(struct kvm_trace *trace, struct kvm_cpu *vcpu)
     return 0;
 }
 
+
+static int kvm_trace__ensure_test_dir(void)
+{
+    struct stat st;
+
+    if (mkdir("Test", 0755) == 0)
+        return 0;
+
+    if (errno != EEXIST)
+        return -errno;
+
+    if (stat("Test", &st) < 0)
+        return -errno;
+
+    return S_ISDIR(st.st_mode) ? 0 : -ENOTDIR;
+}
+
+
 int kvm_trace__save(const struct kvm_trace *trace,
                     const char *path)
 {
@@ -138,6 +156,12 @@ int kvm_trace__save(const struct kvm_trace *trace,
         trace->arch_state_size == 0 ||
         trace->count > trace->capacity)
         return -EINVAL;
+	
+	if (strncmp(path, "Test/", 5) == 0) {
+    		ret = kvm_trace__ensure_test_dir();
+    		if (ret < 0)
+        	return ret;
+	}
 
     fp = fopen(path, "wb");
     if (!fp)

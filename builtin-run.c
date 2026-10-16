@@ -761,6 +761,9 @@ static struct kvm *kvm_cmd_run_init(int argc, const char **argv)
 	if (kvm->cfg.nrcpus == 0)
 		kvm->cfg.nrcpus = nr_online_cpus;
 
+	if (kvm->cfg.wait_fuzz && kvm->cfg.nrcpus != 1)
+		die("--wait-fuzz requires exactly one vCPU; use -c 1");
+
 	if (!kvm->cfg.ram_size)
 		kvm->cfg.ram_size = get_ram_size(kvm->cfg.nrcpus);
 

@@ -722,7 +722,7 @@ static uint64_t generate_values(uint64_t values[30])
 
 
 
-int fuzz_registers(struct kvm_cpu *vcpu){
+uint64_t fuzz_registers(struct kvm_cpu *vcpu){
 
 	uint64_t register_values[30] = {0};
         uint64_t seed = generate_values(register_values);

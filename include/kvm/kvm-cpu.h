@@ -30,7 +30,7 @@ void kvm_cpu__arch_nmi(struct kvm_cpu *cpu);
 void kvm_cpu__run_on_all_cpus(struct kvm *kvm, struct kvm_cpu_task *task);
 
 int trigger_vm_exit(struct kvm_cpu *vcpu);
-int fuzz_registers(struct kvm_cpu *vcpu);
+uint64_t fuzz_registers(struct kvm_cpu *vcpu);
 
 struct kvm_cpu_transition_state;
 

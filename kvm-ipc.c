@@ -388,6 +388,12 @@ static void handle_vmstate(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg)
 static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	
 	int ret = -EINVAL;
+	bool was_pause;
+
+	if (type != KVM_IPC_SNAP || len != 0) {
+        	pr_warning("Invalid snapshot IPC request\n");
+        	goto reply;
+    	}
 
 	if(kvm->nrcpus != 1){
 		
@@ -396,17 +402,40 @@ static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	
 	}
 
-	if(type == KVM_IPC_SNAP){
-	
-		// Mettiamo in pausa l'esecuzione della VM
-		handle_pause(kvm, fd, KVM_IPC_PAUSE, len, msg);
+	if (!kvm->cpus || !kvm->cpus[0] || kvm->cpus[0]->thread == 0) {
+        	
+		pr_warning("Cannot snapshot before the vCPU is initialized\n");
+        	ret = -ESRCH;
+        	goto reply;
+    	}
 
-		// Effettuaimo lo snapshot della VM
-		ret = snap_save(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
+	was_paused = is_paused;
 
-		// Effettuaimo il resume della VM
-		handle_pause(kvm, fd, KVM_IPC_RESUME, len, msg);	
+	if (!was_paused) {
+        	
+		handle_pause(kvm, fd, KVM_IPC_PAUSE, 0, NULL);
+
+        	if (!is_paused) {
+            		pr_err("Failed to pause VM for snapshot\n");
+            		ret = -EBUSY;
+            		goto reply;
+        	}
+    	
 	}
+
+	ret = snap_save(kvm, kvm->cpus[0],
+                    "./snapshot/snapshot.bin");
+
+	if (!was_paused) {
+        	
+		handle_pause(kvm, fd, KVM_IPC_RESUME, 0, NULL);
+
+        	if (is_paused) {
+            		pr_err("Failed to resume VM after snapshot\n");
+            		if (ret == 0)
+                	ret = -EIO;
+        	}
+    	}
 
 reply:
 	if (write_in_full(fd, &ret, sizeof(ret)) < 0)

@@ -388,7 +388,7 @@ static void handle_vmstate(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg)
 static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	
 	int ret = -EINVAL;
-	bool was_pause;
+	bool was_paused;
 
 	if (type != KVM_IPC_SNAP || len != 0) {
         	pr_warning("Invalid snapshot IPC request\n");

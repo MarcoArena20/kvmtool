@@ -174,7 +174,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 	struct kvm_trace *trace = NULL;
 	char trace_path[50] = "Test/";
 
-	if (cpu->kvm->cfg.intercept_vm_exit) {
+	if (cpu->kvm->cfg.intercept_vm_entry) {
     		before = kvm_cpu_transition_state__create();
     		if (!before)
         		goto panic_kvm;

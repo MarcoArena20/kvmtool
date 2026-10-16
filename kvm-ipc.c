@@ -402,13 +402,6 @@ static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	
 	}
 
-	if (!kvm->cpus || !kvm->cpus[0] || kvm->cpus[0]->thread == 0) {
-        	
-		pr_warning("Cannot snapshot before the vCPU is initialized\n");
-        	ret = -ESRCH;
-        	goto reply;
-    	}
-
 	was_paused = is_paused;
 
 	if (!was_paused) {

@@ -33,9 +33,7 @@ struct kvm_config {
 	int active_console;
 	int debug_iodelay;
 	int nrcpus;
-	bool intercept_vm_exit;
 	bool wait_fuzz;
-	bool trace_execution;
 	const char *restore_snapshot;
 	const char *fuzz_seed;
 	const char *kernel_cmdline;
@@ -59,6 +57,8 @@ struct kvm_config {
 	const char *real_cmdline;
 	struct virtio_net_params *net_params;
 	bool single_step;
+	bool intercept_vm_entry;
+	bool trace_execution;
 	bool vnc;
 	bool gtk;
 	bool sdl;

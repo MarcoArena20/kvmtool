@@ -16,6 +16,5 @@ $LKVM run \
 --mem 1024 \
 --nested --e2h0 \
 --params "console=ttyS0,115200 earlycon" \
---intercept-vm-exit \
 --restore-snapshot $SNAPSHOT --wait-fuzz \
---trace-execution
+--debug-single-step --intercept-vm-entry --trace-execution 

@@ -242,13 +242,8 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 	OPT_STRING('\0', "restore-snapshot", &(cfg)->restore_snapshot, 	\
 			"file",						\
 			"Restore VM from snapshot"),			\
-	OPT_BOOLEAN('\0', "intercept-vm-exit",				\
-			&(cfg)->intercept_vm_exit,			\
-			"Enable the possibility to "			\
-			"intercept a vm-exit"), 			\
+									\
 	OPT_BOOLEAN('\0', "wait-fuzz", &(cfg)->wait_fuzz, "Wait the fuzzer"),\
-	OPT_BOOLEAN('\0', "trace-execution", &(cfg)->trace_execution,	\
-			"Trace the CPU execution"),			\
 									\
 									\
 	OPT_GROUP("Kernel options:"),					\
@@ -289,6 +284,13 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 			"Enable MMIO debugging"),			\
 	OPT_INTEGER('\0', "debug-iodelay", &(cfg)->debug_iodelay,	\
 			"Delay IO by millisecond"),			\
+	OPT_BOOLEAN('\0', "intercept-vm-entry",				\
+			&(cfg)->intercept_vm_entry,			\
+			"Enable the possibility to "			\
+			"intercept a vm-entry"), 			\
+	OPT_BOOLEAN('\0', "debug-trace-execution", 			\
+			&(cfg)->trace_execution,			\
+			"Trace the CPU execution"),			\
 									\
 	OPT_ARCH(RUN, cfg)						\
 	OPT_END()							\
@@ -666,6 +668,15 @@ static void kvm_run_validate_cfg(struct kvm *kvm)
 		}
 	}
 
+	if(kvm->cfg.wait_fuzz && !kvm->cfg.restore_snapshot)
+		die("Cannot use --wait-fuzz option without --restore-snapshot");
+
+	if(kvm->cfg.trace_execution && !kvm->cfg.single_step)
+		die("Cannot use --trace-execution option without --debug-single-step");
+
+	if(kvm->cfg.intercept_vm_entry && !kvm->cfg.single_step)
+		die("Cannot use --intercept-vm-entry option without --debug-single-step");
+
 	kvm__arch_validate_cfg(kvm);
 }
 
@@ -877,8 +888,11 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	if (IS_ERR(kvm))
 		return PTR_ERR(kvm);
 	
+	// Gestione l'eventuale necessità di dover ricaricare uno snapshot della VM
 	if(kvm->cfg.restore_snapshot){
-		snap_load(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
+
+		if(snap_load(kvm, kvm->cpus[0], kvm->cfg.restore_snapshot) < 0)
+			return -1;
 		
 		while(kvm->cfg.wait_fuzz){
 		
@@ -886,7 +900,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 			sleep(1);
 
 		}
-		kvm->cfg.single_step = true;
+
 	}
 
 	ret = kvm_cmd_run_work(kvm);

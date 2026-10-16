@@ -182,8 +182,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
 	if (cpu->kvm->cfg.trace_execution) {
     		
-		trace = kvm_trace__create(100000);
-    	
+		trace = kvm_trace__create(100000);	
 		if (!trace)
         		goto panic_kvm;
 	}
@@ -200,27 +199,28 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 		if (before && kvm_cpu_transition_state__capture(cpu, before) < 0)
         		goto panic_kvm;
 		
-		if(trace && kvm_trace__record(trace, cpu) < 0)
-			goto panic_kvm;
-		else{
-		
+		if(trace){
+			
+			if(kvm_trace__record(trace, cpu) < 0)
+				goto panic_kvm;
+			
 			if (trace->count % 16 == 0 &&
     				kvm_trace__detect_cycle(trace, 32, 8)) {
-    					pr_info("Possible cycle detected: start=%zu, "
-            				"length=%zu, repetitions=%zu\n",
-            				trace->cycle_start,
-            				trace->cycle_length,
-            				trace->cycle_repetitions);
+    				
+				pr_info("Possible cycle detected: start=%zu, "
+            					"length=%zu, repetitions=%zu\n",
+            					trace->cycle_start,
+            					trace->cycle_length,
+            					trace->cycle_repetitions);
 				
 				if(cpu->kvm->cfg.fuzz_seed){
 
 					strcat(trace_path, cpu->kvm->cfg.fuzz_seed);
 					strcat(trace_path, ".bin");
 
-					printf("Path saved (cycle): %s\n", trace_path);
 				}else{
 					strcat(trace_path, "traccia_test.bin");
-				}
+					}
 
     				int ret = kvm_trace__save(trace, trace_path);
     				if (ret < 0)
@@ -230,6 +230,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 				goto exit_kvm;
 			}
 		}
+
 		kvm_cpu__run(cpu);
 
 		switch (cpu->kvm_run->exit_reason) {

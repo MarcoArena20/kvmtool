@@ -284,7 +284,7 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 			"Enable MMIO debugging"),			\
 	OPT_INTEGER('\0', "debug-iodelay", &(cfg)->debug_iodelay,	\
 			"Delay IO by millisecond"),			\
-	OPT_BOOLEAN('\0', "intercept-vm-entry",				\
+	OPT_BOOLEAN('\0', "debug-intercept-vm-entry",			\
 			&(cfg)->intercept_vm_entry,			\
 			"Enable the possibility to "			\
 			"intercept a vm-entry"), 			\

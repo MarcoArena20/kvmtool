@@ -387,10 +387,12 @@ static void handle_vmstate(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg)
 
 static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	
+	int ret = -EINVAL;
+
 	if(kvm->nrcpus != 1){
 		
 		pr_warning("There are more than 1 vCPU!!");
-		return;
+		goto reply;
 	
 	}
 
@@ -400,11 +402,15 @@ static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 		handle_pause(kvm, fd, KVM_IPC_PAUSE, len, msg);
 
 		// Effettuaimo lo snapshot della VM
-		snap_save(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
+		ret = snap_save(kvm, kvm->cpus[0], "./snapshot/snapshot.bin");
 
 		// Effettuaimo il resume della VM
 		handle_pause(kvm, fd, KVM_IPC_RESUME, len, msg);	
 	}
+
+reply:
+	if (write_in_full(fd, &ret, sizeof(ret)) < 0)
+        	pr_warning("Failed to send snapshot status\n");
 
 }
 static void handle_fuzz(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){

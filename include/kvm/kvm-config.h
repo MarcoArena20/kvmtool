@@ -58,7 +58,7 @@ struct kvm_config {
 	struct virtio_net_params *net_params;
 	bool single_step;
 	bool intercept_vm_entry;
-	uint64_t trace_execution;
+	u64 trace_execution;
 	bool vnc;
 	bool gtk;
 	bool sdl;

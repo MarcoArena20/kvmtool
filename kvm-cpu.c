@@ -207,7 +207,7 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
 	if (cpu->kvm->cfg.trace_execution) {
     		
-		trace = kvm_trace__create(100000);	
+		trace = kvm_trace__create((size_t)cpu->kvm->cfg.trace_execution);	
 		if (!trace)
         		goto panic_kvm;
 	}
@@ -225,6 +225,30 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
         		goto panic_kvm;
 		
 		if(trace){
+
+			if (trace->count >= cpu->kvm->cfg.trace_execution) {
+    				
+				int ret;
+
+    				ret = kvm_cpu__build_trace_path(
+        				trace_path, sizeof(trace_path),
+        				cpu->kvm->cfg.fuzz_seed);
+
+    				if (ret < 0) {
+        				pr_err("Cannot build trace path: %s\n",
+               							strerror(-ret));
+        				goto panic_kvm;
+    				}
+
+    				ret = kvm_trace__save(trace, trace_path);
+
+    				if (ret < 0)
+        				pr_err("Cannot save trace: %s\n", strerror(-ret));
+    				else
+        				pr_info("Trace saved successfully: %s\n", trace_path);
+
+    				goto exit_kvm;
+			}
 			
 			if(kvm_trace__record(trace, cpu) < 0)
 				goto panic_kvm;

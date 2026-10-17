@@ -288,9 +288,9 @@ static int loglevel_parser(const struct option *opt, const char *arg, int unset)
 			&(cfg)->intercept_vm_entry,			\
 			"Enable the possibility to "			\
 			"intercept a vm-entry"), 			\
-	OPT_BOOLEAN('\0', "debug-trace-execution", 			\
+	OPT_U64('\0', "debug-trace-execution", 				\
 			&(cfg)->trace_execution,			\
-			"Trace the CPU execution"),			\
+			"Maximum number of instruction to trace"),	\
 									\
 	OPT_ARCH(RUN, cfg)						\
 	OPT_END()							\
@@ -672,10 +672,13 @@ static void kvm_run_validate_cfg(struct kvm *kvm)
 		die("Cannot use --wait-fuzz option without --restore-snapshot");
 
 	if(kvm->cfg.trace_execution && !kvm->cfg.single_step)
-		die("Cannot use --trace-execution option without --debug-single-step");
+		die("Cannot use --debug-trace-execution option without --debug-single-step");
+
+	if (kvm->cfg.trace_execution > SIZE_MAX)
+    		die("--debug-trace-execution value is too large");
 
 	if(kvm->cfg.intercept_vm_entry && !kvm->cfg.single_step)
-		die("Cannot use --intercept-vm-entry option without --debug-single-step");
+		die("Cannot use --debug-intercept-vm-entry option without --debug-single-step");
 
 	kvm__arch_validate_cfg(kvm);
 }

@@ -922,8 +922,13 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 			
 			if(kvm->cfg.wait_fuzz){
 			
-				printf("No fuzz input...\n");	
-				return -1;
+				ret = -ETIMEDOUT;
+
+        			pr_err("No fuzz input received within 5 seconds; "
+               						"terminating VM startup\n");
+
+        			kvm_cmd_run_exit(kvm, ret);
+        			return ret;
 			}
 
 		}

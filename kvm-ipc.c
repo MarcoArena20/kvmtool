@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include "kvm/epoll.h"
 #include "kvm/kvm-ipc.h"
@@ -390,10 +391,19 @@ static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	int ret = -EINVAL;
 	bool was_paused;
 
-	if (type != KVM_IPC_SNAP || len != 0) {
-        	pr_warning("Invalid snapshot IPC request\n");
-        	goto reply;
-    	}
+	const char *filename = NULL;
+
+	if (type != KVM_IPC_SNAP || !msg ||
+    		len < 2 || len > PATH_MAX ||
+    			msg[len - 1] != '\0' ||
+    		memchr(msg, '\0', len - 1) != NULL) {
+    
+		pr_warning("Invalid snapshot IPC request\n");
+    		ret = -EINVAL;
+    		goto reply;
+	}
+
+	filename = (const char *)msg;
 
 	if(kvm->nrcpus != 1){
 		
@@ -417,7 +427,7 @@ static void handle_snap(struct kvm *kvm, int fd, u32 type, u32 len, u8 *msg){
 	}
 
 	ret = snap_save(kvm, kvm->cpus[0],
-                    "./snapshot/snapshot.bin");
+                    filename);
 
 	if (!was_paused) {
         	

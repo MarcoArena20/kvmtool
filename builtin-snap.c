@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <limits.h>
 #include "kvm/read-write.h"
 #include "kvm/builtin-snap.h"
 #include "kvm/registers.h"
@@ -9,15 +10,21 @@
 #include <kvm/kvm-cmd.h>
 
 static const char *instance_name;
+static const char *snapshot_directory = "Snapshot";
+static const char *snapshot_name = "snapshot";
 
 static const char * const snap_usage[] = {
-	"lkvm snap [-n name]",
+	"lkvm snap [-n name] [-d directory] [-s snapshot-name] ",
 	NULL
 };
 
 static const struct option snap_options[] = {
 	OPT_GROUP("General options:"),
 	OPT_STRING('n', "name", &instance_name, "name", "Instance name"),
+	OPT_STRING('d', "directory", &snapshot_directory,
+               "directory", "Snapshot output directory (default: Snapshot)"),
+    	OPT_STRING('s', "snapshot-name", &snapshot_name,
+               "name", "Snapshot name without .bin (default: snapshot)"),
 	OPT_END()
 };
 
@@ -36,17 +43,64 @@ void kvm_snap_help(void)
 	usage_with_options(snap_usage, snap_options);
 }
 
-static int do_snap(const char *name, int sock)
+static int build_snapshot_path(char *path, size_t path_size,
+                               const char *directory,
+                               const char *name)
+{
+    	size_t name_len;
+    	size_t dir_len;
+    	int n;
+
+    	if (!path || !path_size ||
+        	!directory || !*directory ||
+        	!name || !*name)
+        	return -EINVAL;
+
+    	/* Il nome deve essere un basename, non un percorso. */
+    	if (strchr(name, '/'))
+        	return -EINVAL;
+
+    	name_len = strlen(name);
+    	if (name_len >= sizeof(".bin") - 1 &&
+        	strcmp(name + name_len - (sizeof(".bin") - 1), ".bin") == 0)
+        	return -EINVAL;
+
+    	dir_len = strlen(directory);
+
+    	n = snprintf(path, path_size, "%s%s%s.bin",
+                 	directory,
+                 	directory[dir_len - 1] == '/' ? "" : "/",
+                 	name);
+
+    	if (n < 0)
+        	return -EIO;
+
+    	if ((size_t)n >= path_size)
+        	return -ENAMETOOLONG;
+
+    	return 0;
+}
+
+static int do_snap(const char *name, int sock, const char *snapshot_path)
 {
 	int status;
 	int r;
 	ssize_t n;
 
-	r = kvm_ipc__send(sock, KVM_IPC_SNAP);
+	size_t path_len = strlen(snapshot_path) + 1;
+
+	if (path_len > PATH_MAX)
+    		return -ENAMETOOLONG;
+
+	r = kvm_ipc__send_msg(sock, KVM_IPC_SNAP,
+                      	(u32)path_len,
+                      	(u8 *)snapshot_path);
+
 	if (r < 0) {
-        	pr_err("Failed to send snapshot request for guest %s\n", name);
-        	return r;
-    	}
+    		pr_err("Failed to send snapshot request for guest %s\n", name);
+    		return r;
+	}
+
 
 	n = read_in_full(sock, &status, sizeof(status));
 
@@ -69,24 +123,29 @@ static int do_snap(const char *name, int sock)
 
 int kvm_cmd_snap(int argc, const char **argv, const char *prefix)
 {	
+    	int instance;
+    	int r;
+    	char snapshot_path[PATH_MAX];
 
-        int instance;
-	int r;
+    	parse_snap_options(argc, argv);
 
-	parse_snap_options(argc, argv);
+    	if (instance_name == NULL)
+        	kvm_snap_help();
 
-	if (instance_name == NULL)
-		kvm_snap_help();
+    	r = build_snapshot_path(snapshot_path, sizeof(snapshot_path),
+                            snapshot_directory, snapshot_name);
+    	if (r < 0)
+        	die("Invalid snapshot path: %s", strerror(-r));
 
-	instance = kvm__get_sock_by_instance(instance_name);
+    	instance = kvm__get_sock_by_instance(instance_name);
 
-	if (instance <= 0)
-		die("Failed locating instance");
+    	if (instance <= 0)
+        	die("Failed locating instance");
 
-	r = do_snap(instance_name, instance);
+    	r = do_snap(instance_name, instance, snapshot_path);
 
-	close(instance);
+    	close(instance);
 
-	return r;
+    	return r;
 }
 

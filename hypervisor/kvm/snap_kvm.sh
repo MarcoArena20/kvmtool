@@ -4,5 +4,5 @@
 CURRENT_DIR="$(pwd)"
 LKVM=$CURRENT_DIR/../../lkvm
 
-$LKVM snap --name kvm
+$LKVM snap --name kvm -d Snapshot -s snapshot
 

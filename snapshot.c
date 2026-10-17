@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <kvm/snapshot.h>
 #include <kvm/registers.h>
@@ -542,6 +543,47 @@ static int snap_load_ram(struct kvm *kvm, int fd)
     pr_info("=========================================\n");
 }*/
 
+
+static int snap_ensure_parent_dir(const char *filename)
+{
+    struct stat st;
+    char *path;
+    char *slash;
+    int ret = 0;
+
+    if (!filename || !*filename)
+        return -EINVAL;
+
+    path = strdup(filename);
+    if (!path)
+        return -ENOMEM;
+
+    slash = strrchr(path, '/');
+
+    if (!slash) {
+        free(path);
+        return 0;
+    }
+
+    if (slash == path)
+        slash[1] = '\0';
+    else
+        *slash = '\0';
+
+    if (mkdir(path, 0755) < 0) {
+        if (errno != EEXIST)
+            ret = -errno;
+        else if (stat(path, &st) < 0)
+            ret = -errno;
+        else if (!S_ISDIR(st.st_mode))
+            ret = -ENOTDIR;
+    }
+
+    free(path);
+    return ret;
+}
+
+
 int snap_save(struct kvm *kvm,
               struct kvm_cpu *vcpu,
               const char *filename)
@@ -591,6 +633,15 @@ int snap_save(struct kvm *kvm,
         /*
          * Apriamo lo snapshot solo dopo aver trovato il numero di registri salvabili.
          */
+
+	ret = snap_ensure_parent_dir(filename);
+	
+	if (ret < 0) {
+    		pr_err("Unable to create snapshot directory for '%s': %s\n",
+           					filename, strerror(-ret));
+    		goto out;
+	}
+
         fd = open(filename,
                   O_WRONLY | O_CREAT | O_TRUNC,
                   0644);

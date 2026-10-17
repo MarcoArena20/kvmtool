@@ -242,11 +242,12 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 
     				ret = kvm_trace__save(trace, trace_path);
 
-    				if (ret < 0)
+    				if (ret < 0){
         				pr_err("Cannot save trace: %s\n", strerror(-ret));
-    				else
-        				pr_info("Trace saved successfully: %s\n", trace_path);
-
+					goto panic_kvm;
+				}
+        			
+				pr_info("Trace saved successfully: %s\n", trace_path);
     				goto exit_kvm;
 			}
 			
@@ -272,11 +273,11 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 				}
 
     				ret = kvm_trace__save(trace, trace_path);
-    				if (ret < 0)
+    				if (ret < 0){
         				printf("Impossibile salvare la traccia\n");
-				else
-					printf("Traccia salvata correttamente\n");
-				
+					goto panic_kvm;
+				}
+				printf("Traccia salvata correttamente\n");
 				goto exit_kvm;
 			}
 		}
@@ -313,11 +314,11 @@ int kvm_cpu__start(struct kvm_cpu *cpu)
 				
 						ret = kvm_trace__save(trace, trace_path);
         			
-						if (ret < 0)
+						if (ret < 0){
             						printf("Impossibile salvare la traccia\n");
-						else
-							printf("Traccia salvata con successo\n");
-				
+							goto panic_kvm;
+						}
+						printf("Traccia salvata con successo\n");
 						goto exit_kvm;
             				}
         			}

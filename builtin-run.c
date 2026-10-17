@@ -900,10 +900,22 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 		if(snap_load(kvm, kvm->cpus[0], kvm->cfg.restore_snapshot) < 0)
 			return -1;
 		
-		while(kvm->cfg.wait_fuzz){
+		if(kvm->cfg.wait_fuzz){
 		
 			pr_info("Waiting for the fuzzer");
-			sleep(1);
+			
+			for(int i = 0; i < 5; i++){
+			
+				printf("%d...\n", i);
+				sleep(1);
+			
+			}
+			
+			if(kvm->cfg.wait_fuzz){
+			
+				printf("No fuzz input...\n");	
+				return;
+			}
 
 		}
 

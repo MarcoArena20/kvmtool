@@ -897,8 +897,17 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 	// Gestione l'eventuale necessità di dover ricaricare uno snapshot della VM
 	if(kvm->cfg.restore_snapshot){
 
-		if(snap_load(kvm, kvm->cpus[0], kvm->cfg.restore_snapshot) < 0)
-			return -1;
+		ret = snap_load(kvm, kvm->cpus[0], kvm->cfg.restore_snapshot)
+		
+		if(ret < 0){
+		
+			pr_err("Failed to restore snapshot '%s'\n", 
+					kvm->cfg.restore_snapshot);
+
+			kvm_cmd_run_exit(kvm, ret);
+        		return ret;
+		
+		}
 		
 		if(kvm->cfg.wait_fuzz){
 		

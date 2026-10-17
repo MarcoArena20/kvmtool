@@ -914,7 +914,7 @@ int kvm_cmd_run(int argc, const char **argv, const char *prefix)
 			if(kvm->cfg.wait_fuzz){
 			
 				printf("No fuzz input...\n");	
-				return;
+				return -1;
 			}
 
 		}
